@@ -7,14 +7,23 @@ from shapely.geometry import Point, MultiPoint
 from shapely.ops import nearest_points
 import rtree
 import pygeos
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
+from flask_jsonpify import jsonpify
 
 # Paths de arquivos para leitura
-path_bacia = "D:\\SEMAD\\arq_disph\\BACIA_JOAOLEITE.gpkg"
-path_cnarh = "D:\\SEMAD\\arq_disph\\cnarh40_joaoleite.gpkg"
-path_durhs = "D:\\SEMAD\\arq_disph\\durhs_111121_joaoleite_points.gpkg"
-path_subtrecho = "D:\\SEMAD\\arq_disph\\subtrechos.gpkg"
-logo = "D:\\SEMAD\\arq_disph\\gota_icon_conv.ico"
+# PATH TRAMPO
+path_bacia = "C:\\Users\\paulo.smaia\\Documents\\LOCAL_DB\\BACIAS_GO\\BACIA_JOAO_LEITE\\BACIA_JOAOLEITE.gpkg"
+path_cnarh = "C:\\Users\\paulo.smaia\\Documents\\LOCAL_DB\\BACIAS_GO\\BACIA_JOAO_LEITE\\cnarh40_joaoleite.gpkg"
+path_durhs = "C:\\Users\\paulo.smaia\\Documents\\LOCAL_DB\\BACIAS_GO\\BACIA_JOAO_LEITE\\durhs_111121_joaoleite_points.gpkg"
+path_subtrecho = "C:\\Users\\paulo.smaia\\Documents\\LOCAL_DB\\BACIAS_GO\\BACIA_JOAO_LEITE\\subtrechos.gpkg"
+logo = "C:\\Users\\paulo.smaia\\Documents\\LOCAL_DB\\BACIAS_GO\\BACIA_JOAO_LEITE\\gota_icon_conv.ico"
+
+# PATH HOME
+#path_bacia = "D:\\SEMAD\\arq_disph\\BACIA_JOAOLEITE.gpkg"
+#path_cnarh = "D:\\SEMAD\\arq_disph\\cnarh40_joaoleite.gpkg"
+#path_durhs = "D:\\SEMAD\\arq_disph\\durhs_111121_joaoleite_points.gpkg"
+#path_subtrecho = "D:\\SEMAD\\arq_disph\\subtrechos.gpkg"
+#logo = "D:\\SEMAD\\arq_disph\\gota_icon_conv.ico"
 
 
 bacia_joaoleite = gpd.read_file(path_bacia)
@@ -81,19 +90,23 @@ def ConOutorgasAMontante(location,durhs_joaoleite,cnarh4_joaoleite,subtrechos_jo
 
 # CONSULTA DE VAZOES DAS OUTORGAS À MONTANTE
 def ConOutorgasTotaisAMontante(location,cnarh4_joaoleite,subtrechos_joaoleite):
-  dic = {"cocursodag":(location.iloc[0]['cocursodag']), "cobacia":(location.iloc[0]['cobacia']), "area_km2":(location.iloc[0]['area_km2'])}
+  dic = {"cocursodag":(location.iloc[0]['cocursodag']),
+         "cobacia":(location.iloc[0]['cobacia']),
+         "area_km2":(location.iloc[0]['area_km2'])}
   cobacia = dic.get("cobacia")
   cocursodag = dic.get("cocursodag")
   area_km2 = dic.get("area_km2")
-  filter_otto = ((cnarh4_joaoleite['cocursodag'].str.contains(cocursodag)) & (cnarh4_joaoleite['cobacia'] > (cobacia)) & (cnarh4_joaoleite['INT_TSU_DS'] != 'Subterrânea'))
+  filter_otto = ((cnarh4_joaoleite['cocursodag'].str.contains(cocursodag)) & (cnarh4_joaoleite['cobacia'] > (cobacia))
+                 & (cnarh4_joaoleite['INT_TSU_DS'] != 'Subterrânea'))
   sel_cnarh_externo = cnarh4_joaoleite[filter_otto] #seleção cnarh externa utilizando cod. otto
-  filter_trec_princ = ((cnarh4_joaoleite['cobacia']==cobacia) & (cnarh4_joaoleite['cocursodag'] == cocursodag)& (cnarh4_joaoleite['INT_TSU_DS'] != 'Subterrânea')) #Análise em subtrecho????
+  filter_trec_princ = ((cnarh4_joaoleite['cobacia']==cobacia) & (cnarh4_joaoleite['cocursodag'] == cocursodag)
+                       & (cnarh4_joaoleite['INT_TSU_DS'] != 'Subterrânea')) #Análise em subtrecho????
   filter_trec_princ = cnarh4_joaoleite[filter_trec_princ]
   filter_trec_princ = gpd.sjoin_nearest(filter_trec_princ, subtrechos_joaoleite, how='inner')
   sel_trec_princ = (filter_trec_princ.loc[filter_trec_princ['trecho_princ'] == 1]) #seleção cnarh interna para trecho principal
   merge_all_cnarh = pd.concat([sel_trec_princ,sel_cnarh_externo])
-  merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'] = merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'].stack().str.replace('.','').unstack()
-  merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'] = merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'].stack().str.replace(',','.').unstack()
+  merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'] = merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'].stack().str.replace('.','', regex=True).unstack()
+  merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'] = merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'].stack().str.replace(',','.', regex=True).unstack()
   merge_all_cnarh = merge_all_cnarh.fillna(value=0)
   merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'] = merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'].astype(float)
   tot_cnarh_jan = merge_all_cnarh[merge_all_cnarh['DAD_QT_VAZAODIAJAN'] != 0]
@@ -302,14 +315,12 @@ def analise(location):
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 100, 'Nivel critico Bacia'] = 'Moderado Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 80, 'Nivel critico Bacia'] = 'Alerta'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 50, 'Nivel critico Bacia'] = 'Normal'
-    dfinfos.to_csv("C:\\Users\\maiap\\Documents\\teste_durhs.csv")
-    #print(dfinfos)
-    #print(dfdurhs)
+    print(dfinfos)
     return dfinfos
 
 
 # Função inicial para pegar a localização da Durh
-def getlocation(numero_durh,durhs_joaoleite,subtrechos_joaoleite):
+def getlocation(numero_durh, durhs_joaoleite, subtrechos_joaoleite):
   point = durhs_joaoleite.loc[durhs_joaoleite['numerodurh']== numero_durh] # AQUI ENTRA NUMERO DA DURH
   location = gpd.sjoin_nearest(point,subtrechos_joaoleite, how='inner')
   if (location.iloc[0]['Q95ESPAno'] == 0):
@@ -317,30 +328,30 @@ def getlocation(numero_durh,durhs_joaoleite,subtrechos_joaoleite):
   else:
     print("Subtrecho fora de barragem/massa d'agua", 'Alerta')
     analise(location)
-  return point
+  return point, location
 
 # função inicial para rodar a localização
-def run(numero_durh):
-  location = getlocation(numero_durh,durhs_joaoleite,subtrechos_joaoleite)
-  return numero_durh,location
+#def run(numero_durh):
+#  location, point = getlocation(numero_durh,durhs_joaoleite,subtrechos_joaoleite)
+#  return numero_durh,location
 
 app = Flask(__name__)
 
 @app.route("/")
 # Função -> O que vc quer exibir naquela pagina
 def homepage():
-    return render_template("homepage.html")
-
+    return render_template('homepage.html')
 
 @app.route("/", methods=["POST", "GET"])
 def run():
-    numero_durh = request.form['text']
-    location = getlocation(numero_durh,durhs_joaoleite,subtrechos_joaoleite)
-    return numero_durh,location
+    numero_durh = request.form['numero_durh']
+    point, location = getlocation(numero_durh,durhs_joaoleite,subtrechos_joaoleite)
+    dfinfos = analise(location)
+    return render_template('homepage.html', tables=[dfinfos.to_html(classes='data', header="true")])
 
-@app.route("/resultados", methods=["POST"])
-def resultados():
-    return render_template('homepage.html',  tables=[dfinfos.to_html(classes='data', header="true")])
+#@app.route("/resultados", methods=["POST"])
+#def resultados():
+#    return render_template('homepage.html',  tables=[dfinfos.to_html(classes='data', header="true")])
 # DURH023031
 
 #Colocar o site no ar

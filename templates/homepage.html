@@ -7,16 +7,14 @@
 </head>
 <body>
     <form action="/" method="POST">
-        <button >Obter vazões esp.</button>
-            <input name="text">
-            <input type="text">
+            <p>Insira o número da Durh:</p>
+            <p><input type="text" name="numero_durh"/></p>
+            <p><input type="submit" value="Obter resultados" /></p>
     </form>
-    <form action="/">
-        <button> Limpar texto</button>
-    </form>
-    {% for table in tables %}
-            {{titles[loop.index]}}
+
+{% for table in tables %}
             {{ table|safe }}
-    {% endfor %}
+{% endfor %}
+
 </body>
 </html>
