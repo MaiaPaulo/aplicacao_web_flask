@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Disponibilidade Hídrica</title>
+</head>
+<body>
+    <form action="/" method="POST">
+        <button >Obter vazões esp.</button>
+            <input name="text">
+            <input type="text">
+    </form>
+    <form action="/">
+        <button> Limpar texto</button>
+    </form>
+    {% for table in tables %}
+            {{titles[loop.index]}}
+            {{ table|safe }}
+    {% endfor %}
+</body>
+</html>
