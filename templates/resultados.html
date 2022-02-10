@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultados</title>
+</head>
+<body>
+<form action="/Resultados" method="POST">
+    <a href="{{url_for('return_to')}}"><input type="button" value="Inserir nova DURH"></a>
+    <p>Aqui aparecerá o resultado da função</p>
+        {% for table in tables %}
+            {{ table|safe }}
+        {% endfor %}
+
+</form>
+</body>
+</html>

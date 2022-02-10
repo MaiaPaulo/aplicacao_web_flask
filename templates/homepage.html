@@ -6,12 +6,11 @@
     <title>Disponibilidade Hídrica</title>
 </head>
 <body>
-    <form action="/" method="POST">
+    <form action="/Resultados" method="POST">
             <p>Insira o número da Durh:</p>
             <p><input type="text" name="numero_durh"/></p>
             <p><input type="submit" value="Obter resultados" /></p>
     </form>
-
 {% for table in tables %}
             {{ table|safe }}
 {% endfor %}

@@ -1,12 +1,6 @@
 # Importação de Libs
 import geopandas as gpd
 import pandas as pd
-import os
-import shapely
-from shapely.geometry import Point, MultiPoint
-from shapely.ops import nearest_points
-import rtree
-import pygeos
 from flask import Flask, render_template, request, send_file
 from flask_jsonpify import jsonpify
 
@@ -315,7 +309,7 @@ def analise(location):
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 100, 'Nivel critico Bacia'] = 'Moderado Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 80, 'Nivel critico Bacia'] = 'Alerta'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 50, 'Nivel critico Bacia'] = 'Normal'
-    print(dfinfos)
+    # print(dfinfos)
     return dfinfos
 
 
@@ -342,16 +336,23 @@ app = Flask(__name__)
 def homepage():
     return render_template('homepage.html')
 
-@app.route("/", methods=["POST", "GET"])
+@app.route("/Resultados", methods=["POST", "GET"])
 def run():
     numero_durh = request.form['numero_durh']
     point, location = getlocation(numero_durh,durhs_joaoleite,subtrechos_joaoleite)
     dfinfos = analise(location)
-    return render_template('homepage.html', tables=[dfinfos.to_html(classes='data', header="true")])
+    return render_template('resultados.html', tables=[dfinfos.to_html(classes='data', header="true")])
 
-#@app.route("/resultados", methods=["POST"])
+
+@app.route("/")
+def return_to():
+    return redirect(url_for("/"))
+
+
+#@app.route("/Resultados", methods=["GET"])
 #def resultados():
-#    return render_template('homepage.html',  tables=[dfinfos.to_html(classes='data', header="true")])
+#    dfinfos = run()
+#    return render_template('resultados.html', tables=[dfinfos.to_html(classes='data', header="true")])
 # DURH023031
 
 #Colocar o site no ar
