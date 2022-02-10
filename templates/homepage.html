@@ -5,15 +5,13 @@
     <meta charset="UTF-8">
     <title>Disponibilidade Hídrica</title>
 </head>
-<body>
+<body  bgcolor="#E0FFFF">
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
     <form action="/Resultados" method="POST">
-            <p>Insira o número da Durh:</p>
-            <p><input type="text" name="numero_durh"/></p>
-            <p><input type="submit" value="Obter resultados" /></p>
+            <center><b><font size="5"> Insira o número da Durh:</font></b></center>
+            <center><p><input type="text" name="numero_durh"/></p></center>
+            <center><p><input type="submit" value="Obter resultados" /></p></center>
     </form>
-{% for table in tables %}
-            {{ table|safe }}
-{% endfor %}
 
 </body>
 </html>

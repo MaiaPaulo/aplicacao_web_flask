@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <title>Resultados</title>
 </head>
-<body>
+<body bgcolor="#E0FFFF">
+<br><br><br>
 <form action="/Resultados" method="POST">
-    <a href="{{url_for('return_to')}}"><input type="button" value="Inserir nova DURH"></a>
-    <p>Aqui aparecerá o resultado da função</p>
-        {% for table in tables %}
-            {{ table|safe }}
-        {% endfor %}
+    <div align="center"><p><font size="7">Valores referentes à posição da {{numero_durh}}</font></p>
+        <br>
+    <p><font size="5">Município: {{mun_durh}}</font></p>
+    <p><font size="5">Corpo D'água: {{corpodagua}}</font></p>
+    <p><font size="5">Sub-bacia: {{subbacia}}</font></p>
+    <a href="{{url_for('return_to')}}"><input type="button" value="Inserir nova DURH"></a></div>
+    {% for table in tables %}
+        {{ table|safe }}
+    {% endfor %}
+    <br>
 
 </form>
 </body>

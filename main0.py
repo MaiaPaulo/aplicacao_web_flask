@@ -1,7 +1,7 @@
 # Importação de Libs
 import geopandas as gpd
 import pandas as pd
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, send_file, make_response
 from flask_jsonpify import jsonpify
 
 # Paths de arquivos para leitura
@@ -321,8 +321,11 @@ def getlocation(numero_durh, durhs_joaoleite, subtrechos_joaoleite):
     print("Subtrecho em barragem/massa d'agua", 'Alerta') # FUTURO POP-UP DE NOTIFICAÇÃO
   else:
     print("Subtrecho fora de barragem/massa d'agua", 'Alerta')
+    mun_durh = point.iloc[0]['municipio']
+    corpodagua = point.iloc[0]['corpodagua']
+    subbacia = point.iloc[0]['subbacia']
     analise(location)
-  return point, location
+  return point, location, mun_durh, corpodagua, subbacia
 
 # função inicial para rodar a localização
 #def run(numero_durh):
@@ -339,14 +342,21 @@ def homepage():
 @app.route("/Resultados", methods=["POST", "GET"])
 def run():
     numero_durh = request.form['numero_durh']
-    point, location = getlocation(numero_durh,durhs_joaoleite,subtrechos_joaoleite)
+    point, location, mun_durh, corpodagua, subbacia = getlocation(numero_durh,durhs_joaoleite,subtrechos_joaoleite)
     dfinfos = analise(location)
-    return render_template('resultados.html', tables=[dfinfos.to_html(classes='data', header="true")])
+    return render_template('resultados.html',
+                           numero_durh=numero_durh,
+                           dfinfos=dfinfos,
+                           mun_durh=mun_durh,
+                           corpodagua=corpodagua,
+                           subbacia=subbacia,
+                           tables=[dfinfos.to_html(classes='data', header="true")])
 
 
 @app.route("/")
 def return_to():
     return redirect(url_for("/"))
+
 
 
 #@app.route("/Resultados", methods=["GET"])
