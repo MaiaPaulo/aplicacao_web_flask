@@ -1,7 +1,9 @@
 # Importação de Libs
 import geopandas as gpd
 import pandas as pd
+from pandas.tools.plotting import table
 from flask import Flask, render_template, request, send_file, make_response
+import matplotlib.pyplot as plt
 from flask_jsonpify import jsonpify
 
 # Paths de arquivos para leitura
@@ -318,9 +320,9 @@ def getlocation(numero_durh, durhs_joaoleite, subtrechos_joaoleite):
   point = durhs_joaoleite.loc[durhs_joaoleite['numerodurh']== numero_durh] # AQUI ENTRA NUMERO DA DURH
   location = gpd.sjoin_nearest(point,subtrechos_joaoleite, how='inner')
   if (location.iloc[0]['Q95ESPAno'] == 0):
-    print("Subtrecho em barragem/massa d'agua", 'Alerta') # FUTURO POP-UP DE NOTIFICAÇÃO
+    print("Subtrecho em barragem/massa d'agua")  # FUTURO POP-UP DE NOTIFICAÇÃO
   else:
-    print("Subtrecho fora de barragem/massa d'agua", 'Alerta')
+    print("Subtrecho fora de barragem/massa d'agua")
     mun_durh = point.iloc[0]['municipio']
     corpodagua = point.iloc[0]['corpodagua']
     subbacia = point.iloc[0]['subbacia']

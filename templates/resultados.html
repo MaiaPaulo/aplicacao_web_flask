@@ -4,20 +4,19 @@
     <meta charset="UTF-8">
     <title>Resultados</title>
 </head>
-<body bgcolor="#E0FFFF">
+<body>
 <br><br><br>
 <form action="/Resultados" method="POST">
-    <div align="center"><p><font size="7">Valores referentes à posição da {{numero_durh}}</font></p>
-        <br>
-    <p><font size="5">Município: {{mun_durh}}</font></p>
-    <p><font size="5">Corpo D'água: {{corpodagua}}</font></p>
-    <p><font size="5">Sub-bacia: {{subbacia}}</font></p>
-    <a href="{{url_for('return_to')}}"><input type="button" value="Inserir nova DURH"></a></div>
+    <center><img src="https://portal.meioambiente.go.gov.br/cnd/resources/imagens/logoGoiasSemad.png" width="250"></center>
+    <div align="center"><b><font size="5">Valores referentes à posição da {{numero_durh}}</font></b>
+    <p><font size="4">Município: {{mun_durh}}</font></p>
+    <p><font size="4">Corpo D'água: {{corpodagua}}</font></p>
+    <p><font size="4">Sub-bacia: {{subbacia}}</font></p>
     {% for table in tables %}
         {{ table|safe }}
     {% endfor %}
-    <br>
-
+        <br>
+    <a href="{{url_for('return_to')}}"><input type="button" value="Inserir nova DURH"></a></div>
 </form>
 </body>
 </html>
