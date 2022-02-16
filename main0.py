@@ -1,10 +1,7 @@
 # Importação de Libs
 import geopandas as gpd
 import pandas as pd
-from pandas.tools.plotting import table
 from flask import Flask, render_template, request, send_file, make_response
-import matplotlib.pyplot as plt
-from flask_jsonpify import jsonpify
 
 # Paths de arquivos para leitura
 # PATH TRAMPO
