@@ -1,58 +1,36 @@
-# Importação de Libs
 import geopandas as gpd
 import pandas as pd
 from flask import Flask, render_template, request, send_file, make_response
-from sqlalchemy import create_engine
 
-# # Paths de arquivos para leitura
-# # PATH TRAMPO
-path_bacia = "C:\\Users\\paulo.smaia\\Documents\\LOCAL_DB\\BACIAS_GO\\BACIA_PIRAPETINGA\\MINIBACIAS_PIRAPETINGA.gpkg"
-path_cnarh = "C:\\Users\\paulo.smaia\\Documents\\LOCAL_DB\\BACIAS_GO\\BACIA_PIRAPETINGA\\CNARH40_PIRAPETINGA.gpkg"
-path_durhs = "C:\\Users\\paulo.smaia\\Documents\\LOCAL_DB\\BACIAS_GO\\BACIA_PIRAPETINGA\\DURHS_PIRAPETINGA.gpkg"
-path_subtrecho = "C:\\Users\\paulo.smaia\\Documents\\LOCAL_DB\\BACIAS_GO\\BACIA_PIRAPETINGA\\SUBTRECHOS_PIRAPETINGA.gpkg"
+# Paths de leitura
+path_subtrechos = "C:/Users/paulo.smaia/Documents/LOCAL_DB/BACIAS_GO/BACIA_PIRAPETINGA/SUBTRECHOS_PIRAPETINGA.gpkg"
+path_bacia = "C:/Users/paulo.smaia/Documents/LOCAL_DB/BACIAS_GO/BACIA_PIRAPETINGA/MINIBACIAS_PIRAPETINGA.gpkg"
+path_cnarh = "C:/Users/paulo.smaia/Documents/LOCAL_DB/BACIAS_GO/BACIA_PIRAPETINGA/CNARH40_PIRAPETINGA.gpkg"
+path_durhs = "C:/Users/paulo.smaia/Documents/LOCAL_DB/BACIAS_GO/BACIA_PIRAPETINGA/DURHS_PIRAPETINGA.gpkg"
 
+# Leitura
 
-# # PATH HOME
-# #path_bacia = "D:\\SEMAD\\arq_disph\\BACIA_JOAOLEITE.gpkg"
-# #path_cnarh = "D:\\SEMAD\\arq_disph\\cnarh40_joaoleite.gpkg"
-# #path_durhs = "D:\\SEMAD\\arq_disph\\durhs_111121_joaoleite_points.gpkg"
-# #path_subtrecho = "D:\\SEMAD\\arq_disph\\subtrechos.gpkg"
-# #logo = "D:\\SEMAD\\arq_disph\\gota_icon_conv.ico"
-#
-#
-bacia_joaoleite = gpd.read_file(path_bacia)
-cnarh4_joaoleite = gpd.read_file(path_cnarh)
-durhs_joaoleite = gpd.read_file(path_durhs)
-subtrechos_joaoleite = gpd.read_file(path_subtrecho)
-
-
-# Acesso à base de dados
-# db_url = "postgresql://adm_geout:ssdgeout@10.207.30.15:5432/base_hidro"
-# engine = create_engine(db_url)
-#
-# sql_bacia = "SELECT * FROM public.bacia_joaoleite"
-# sql_durhs = "SELECT * FROM public.durhs_joaoleite"
-# sql_subtrechos = "SELECT * FROM public.subtrechos_joaoleite"
-# sql_cnar40 = "SELECT * FROM public.cnarh4_joaoleite"
-#
-# bacia_joaoleite = gpd.read_postgis(sql_bacia, engine, geom_col='geometry', crs='ESRI:102033')
-# cnarh4_joaoleite = gpd.read_postgis(sql_cnar40, engine, geom_col='geometry', crs='ESRI:102033')
-# durhs_joaoleite = gpd.read_postgis(sql_durhs, engine, geom_col='geometry', crs='ESRI:102033')
-# subtrechos_joaoleite = gpd.read_postgis(sql_subtrechos, engine, geom_col='geometry', crs='ESRI:102033')
+subtrechos = gpd.read_file(path_subtrechos)
+cnarh40 = gpd.read_file(path_cnarh)
+durhs = gpd.read_file(path_durhs)
+bacia = gpd.read_file(path_bacia)
 
 # Reprojeção
-bacia_joaoleite = bacia_joaoleite.to_crs(crs='EPSG:4674')
-cnarh4_joaoleite = cnarh4_joaoleite.to_crs(crs='EPSG:4674')
-durhs_joaoleite = durhs_joaoleite.to_crs(crs='EPSG:4674')
-subtrechos_joaoleite = subtrechos_joaoleite.to_crs(crs='EPSG:4674')
+subtrechos = subtrechos.to_crs(4674)
+durhs = durhs.to_crs(4674)
+bacia = bacia.to_crs(4674)
 
 # Tranformação de afluentes em 0 e mudança de tipo de dado
-subtrechos_joaoleite['trecho_princ'] = (subtrechos_joaoleite['trecho_princ'].fillna(0)).astype(int)
-subtrechos_joaoleite['esp_cd'] = subtrechos_joaoleite['esp_cd'].fillna(0)
-subtrechos_joaoleite['q_q95espano'] = subtrechos_joaoleite['q_q95espano'].fillna(0)
+subtrechos['trecho_princ'] = (subtrechos['trecho_princ'].fillna(0)).astype(int)
+subtrechos['esp_cd'] = subtrechos['esp_cd'].fillna(0)
+subtrechos['q_q95espano'] = subtrechos['q_q95espano'].fillna(0)
+
+# Retirando nans
+cnarh40 = cnarh40.fillna(value="0")
+durhs.loc[:,'dad_qt_diasjan':'dad_qt_diasdez'] = (durhs.loc[:,'dad_qt_diasjan':'dad_qt_diasdez']).astype(float)
 
 # Cálculo da área à montante
-def CalcAreaMont(location,durhs_joaoleite,subtrechos_joaoleite):
+def CalcAreaMont(location,durhs,subtrechos):
   dic = {"cocursodag":(location.iloc[0]['cocursodag']), "cobacia":(location.iloc[0]['cobacia'])}
   cobacia = dic.get("cobacia")
   sel_loc = location[location['cobacia'] == cobacia]
@@ -61,34 +39,34 @@ def CalcAreaMont(location,durhs_joaoleite,subtrechos_joaoleite):
 
 # Cálculo das Vazões sazonais com base na cobacia do subtrecho
 # UNIDADE SAI EM m³/s
-def ConVazoesSazonais(location,durhs_joaoleite,subtrechos_joaoleite):
-  DQ95ESPMES = [location.iloc[0]['Q95ESPJan'],location.iloc[0]['Q95ESPFev'],
-             location.iloc[0]['Q95ESPMar'],location.iloc[0]['Q95ESPAbr'],
-             location.iloc[0]['Q95ESPMai'],location.iloc[0]['Q95ESPJun'],
-             location.iloc[0]['Q95ESPJul'],location.iloc[0]['Q95ESPAgo'],
-             location.iloc[0]['Q95ESPSet'],location.iloc[0]['Q95ESPOut'],
-             location.iloc[0]['Q95ESPNov'],location.iloc[0]['Q95ESPDez']]
+def ConVazoesSazonais(location,durhs_joaoleite,subtrechos):
+  DQ95ESPMES = [location.iloc[0]['q_q95espjan'],location.iloc[0]['q_q95espfev'],
+             location.iloc[0]['q_q95espmar'],location.iloc[0]['q_q95espabr'],
+             location.iloc[0]['q_q95espmai'],location.iloc[0]['q_q95espjun'],
+             location.iloc[0]['q_q95espjul'],location.iloc[0]['q_q95espago'],
+             location.iloc[0]['q_q95espset'],location.iloc[0]['q_q95espout'],
+             location.iloc[0]['q_q95espnov'],location.iloc[0]['q_q95espdez']]
 
-  Q95Local = [location.iloc[0]['Q_DQ95Jan']*1000,location.iloc[0]['Q_DQ95Fev']*1000,
-              location.iloc[0]['Q_DQ95Mar']*1000,location.iloc[0]['Q_DQ95Abr']*1000,
-              location.iloc[0]['Q_DQ95Mai']*1000,location.iloc[0]['Q_DQ95Jun']*1000,
-              location.iloc[0]['Q_DQ95Jul']*1000,location.iloc[0]['Q_DQ95Ago']*1000,
-              location.iloc[0]['Q_DQ95Set']*1000,location.iloc[0]['Q_DQ95Out']*1000,
-              location.iloc[0]['Q_DQ95Nov']*1000,location.iloc[0]['Q_DQ95Dez']*1000]
+  Q95Local = [location.iloc[0]['q_dq95jan']*1000,location.iloc[0]['q_dq95fev']*1000,
+              location.iloc[0]['q_dq95mar']*1000,location.iloc[0]['q_dq95abr']*1000,
+              location.iloc[0]['q_dq95mai']*1000,location.iloc[0]['q_dq95jun']*1000,
+              location.iloc[0]['q_dq95jul']*1000,location.iloc[0]['q_dq95ago']*1000,
+              location.iloc[0]['q_dq95set']*1000,location.iloc[0]['q_dq95out']*1000,
+              location.iloc[0]['q_dq95nov']*1000,location.iloc[0]['q_dq95dez']*1000]
   Qoutorgavel = [i * 0.5 for i in Q95Local]
   return DQ95ESPMES, Q95Local, Qoutorgavel
 
 # CONSULTA DE DADOS DAS OUTORGAS À MONTANTE
-def ConOutorgasAMontante(location,durhs_joaoleite,cnarh4_joaoleite,subtrechos_joaoleite):
+def ConOutorgasAMontante(location,durhs,cnarh40,subtrechos):
   dic = {"cocursodag":(location.iloc[0]['cocursodag']), "cobacia":(location.iloc[0]['cobacia']), "area_km2":(location.iloc[0]['area_km2'])}
   cobacia = dic.get("cobacia")
   cocursodag = dic.get("cocursodag")
   area_km2 = dic.get("area_km2")
-  filter_otto = ((cnarh4_joaoleite['cocursodag'].str.contains(cocursodag)) & (cnarh4_joaoleite['cobacia'] > (cobacia)) & (cnarh4_joaoleite['INT_TSU_DS'] != 'Subterrânea'))
-  sel_cnarh_externo = cnarh4_joaoleite[filter_otto] #seleção cnarh externa utilizando cod. otto
-  filter_trec_princ = ((cnarh4_joaoleite['cobacia']==cobacia) & (cnarh4_joaoleite['cocursodag'] == cocursodag)& (cnarh4_joaoleite['INT_TSU_DS'] != 'Subterrânea')) #Análise em subtrecho????
-  filter_trec_princ = cnarh4_joaoleite[filter_trec_princ]
-  filter_trec_princ = gpd.sjoin_nearest(filter_trec_princ, subtrechos_joaoleite, how='inner')
+  filter_otto = ((cnarh40['cocursodag'].str.contains(cocursodag)) & (cnarh40['cobacia'] > (cobacia)) & (cnarh40['INT_TSU_DS'] != 'Subterrânea'))
+  sel_cnarh_externo = cnarh40[filter_otto] #seleção cnarh externa utilizando cod. otto
+  filter_trec_princ = ((cnarh40['cobacia']==cobacia) & (cnarh40['cocursodag'] == cocursodag)& (cnarh40['INT_TSU_DS'] != 'Subterrânea')) #Análise em subtrecho????
+  filter_trec_princ = cnarh40[filter_trec_princ]
+  filter_trec_princ = gpd.sjoin_nearest(filter_trec_princ, subtrechos, how='inner')
   sel_trec_princ = (filter_teste.loc[filter_teste['trecho_princ'] == 1]) #seleção cnarh interna para trecho principal
   merge_all_cnarh = pd.concat([sel_trec_princ,sel_cnarh_externo])
   dados_cnarh = merge_all_cnarh.loc[:,('INT_CD_CNARH40','EMP_NM_EMPREENDIMENTO','EMP_NM_USUARIO',
@@ -99,26 +77,26 @@ def ConOutorgasAMontante(location,durhs_joaoleite,cnarh4_joaoleite,subtrechos_jo
   return dados_cnarh
 
 # CONSULTA DE VAZOES DAS OUTORGAS À MONTANTE
-def ConOutorgasTotaisAMontante(location,cnarh4_joaoleite,subtrechos_joaoleite):
-  dic = {"cocursodag":(location.iloc[0]['cocursodag']),
-         "cobacia":(location.iloc[0]['cobacia']),
-         "area_km2":(location.iloc[0]['area_km2'])}
+def ConOutorgasTotaisAMontante(location,cnarh40):
+  dic = {"cocursodag":(location.iloc[0]['cocursodag']), "cobacia":(location.iloc[0]['cobacia']), "area_km2":(location.iloc[0]['area_km2'])}
   cobacia = dic.get("cobacia")
   cocursodag = dic.get("cocursodag")
   area_km2 = dic.get("area_km2")
-  filter_otto = ((cnarh4_joaoleite['cocursodag'].str.contains(cocursodag)) & (cnarh4_joaoleite['cobacia'] > (cobacia))
-                 & (cnarh4_joaoleite['INT_TSU_DS'] != 'Subterrânea'))
-  sel_cnarh_externo = cnarh4_joaoleite[filter_otto] #seleção cnarh externa utilizando cod. otto
-  filter_trec_princ = ((cnarh4_joaoleite['cobacia']==cobacia) & (cnarh4_joaoleite['cocursodag'] == cocursodag)
-                       & (cnarh4_joaoleite['INT_TSU_DS'] != 'Subterrânea')) #Análise em subtrecho????
-  filter_trec_princ = cnarh4_joaoleite[filter_trec_princ]
-  filter_trec_princ = gpd.sjoin_nearest(filter_trec_princ, subtrechos_joaoleite, how='inner')
-  sel_trec_princ = (filter_trec_princ.loc[filter_trec_princ['trecho_princ'] == 1]) #seleção cnarh interna para trecho principal
-  merge_all_cnarh = pd.concat([sel_trec_princ,sel_cnarh_externo])
+  sel_bacia = ((bacia['cocursodag'].str.contains(cocursodag)) & (bacia['cobacia'] >= (cobacia)))
+  sel_bacia = bacia[sel_bacia]
+  sel_cnarh = cnarh40.loc[cnarh40['INT_TSU_DS'] != 'Subterrânea']
+  sel_cnarh = sel_cnarh.loc[sel_cnarh['INT_TIN_DS'] == 'Captação']
+  sel_cnarh = sel_cnarh.loc[sel_cnarh['INT_TCH_DS'] == "Rio ou Curso D'Água"]
+  clip_cnarh = sel_cnarh.clip(sel_bacia)
+  merge_all_cnarh = clip_cnarh
+  # filter_otto = ((cnarh40['cocursodag'].str.contains(cocursodag)) & (cnarh40['cobacia'] > (cobacia)) & (cnarh40['INT_TSU_DS'] != 'Subterrânea'))
+  # filter_trec_princ = gpd.sjoin_nearest(filter_trec_princ, subtrechos, how='inner')
+  # sel_trec_princ = (filter_trec_princ.loc[filter_trec_princ['trecho_princ'] == 1]) #seleção cnarh interna para trecho principal
+  # merge_all_cnarh = pd.concat([sel_trec_princ,sel_cnarh_externo])
   merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'] = merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'].astype(str).stack().str.replace('.','', regex=True).unstack()
   merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'] = merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'].astype(str).stack().str.replace(',','.', regex=True).unstack()
   merge_all_cnarh = merge_all_cnarh.fillna(value=0)
-  merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'] = merge_all_cnarh.loc[:,'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'].astype(float)
+  merge_all_cnarh.loc[:, 'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'] = merge_all_cnarh.loc[:, 'DAD_QT_VAZAODIAJAN':'DAD_QT_VAZAODIADEZ'].astype(float)
   tot_cnarh_jan = merge_all_cnarh[merge_all_cnarh['DAD_QT_VAZAODIAJAN'] != 0]
   count_cnarh_jan = tot_cnarh_jan[tot_cnarh_jan.columns[0]].count()
   tot_cnarh_fev = merge_all_cnarh[merge_all_cnarh['DAD_QT_VAZAODIAFEV'] != 0]
@@ -154,6 +132,7 @@ def ConOutorgasTotaisAMontante(location,cnarh4_joaoleite,subtrechos_joaoleite):
                sum(merge_all_cnarh['DAD_QT_VAZAODIASET']/3.6),sum(merge_all_cnarh['DAD_QT_VAZAODIAOUT']/3.6),
                sum(merge_all_cnarh['DAD_QT_VAZAODIANOV']/3.6),sum(merge_all_cnarh['DAD_QT_VAZAODIADEZ']/3.6)]
   return total_outorgas,vazao_tot_cnarh
+
 
 # CONSULTA DE INFORMAÇÕES DA DURH ANALISADA
 def getinfodurh(location):
@@ -205,13 +184,14 @@ def getinfodurh(location):
   return dfinfos
 
 #FUNÇÃO DE VAZAO DAS DURHS VALIDADAS
-def ConVazoesDurhsValid(location,durhs_joaoleite,subtrechos_joaoleite):
+def ConVazoesDurhsValid(location,durhs,subtrechos):
   dic = {"cocursodag":(location.iloc[0]['cocursodag']), "cobacia":(location.iloc[0]['cobacia']), "area_km2":(location.iloc[0]['area_km2'])}
   cobacia = dic.get("cobacia")
   cocursodag = dic.get("cocursodag")
-  sel_bacia = ((bacia_joaoleite['cocursodag'].str.contains(cocursodag)) & (bacia_joaoleite['cobacia'] > (cobacia)))
-  sel_bacia = bacia_joaoleite[sel_bacia]
-  sel_durhs_vald = durhs_joaoleite.loc[durhs_joaoleite['situacaodurh']== 'Validada'] # situacaodurh
+  sel_bacia = ((bacia['cocursodag'].str.contains(cocursodag)) & (bacia['cobacia'] >= (cobacia)))
+  sel_bacia = bacia[sel_bacia]
+  sel_durhs_vald = durhs.loc[durhs['pontointerferencia'] == 'Captação Superficial'] # situacaodurh
+  sel_durhs_vald = sel_durhs_vald.loc[sel_durhs_vald['situacaodurh']== 'Validada']
   clip_durhs = sel_durhs_vald.clip(sel_bacia)
   tot_durh_jan = clip_durhs[clip_durhs['dad_qt_vazaodiajan'] != 0]
   count_durhs_jan = tot_durh_jan[tot_durh_jan.columns[0]].count()
@@ -240,27 +220,27 @@ def ConVazoesDurhsValid(location,durhs_joaoleite,subtrechos_joaoleite):
   total_durhs_mont = [count_durhs_jan,count_durhs_fev,count_durhs_mar,count_durhs_abr,
                       count_durhs_mai,count_durhs_jun,count_durhs_jul,count_durhs_ago,
                       count_durhs_set,count_durhs_out,count_durhs_nov,count_durhs_dez]
-  vaz_durhs_mont = [sum(clip_durhs.dad_qt_vazaodiajan), sum(clip_durhs.dad_qt_vazaodiafev),
-                  sum(clip_durhs.dad_qt_vazaodiamar), sum(clip_durhs.dad_qt_vazaodiaabr),
-                  sum(clip_durhs.dad_qt_vazaodiamai), sum(clip_durhs.dad_qt_vazaodiajun),
-                  sum(clip_durhs.dad_qt_vazaodiajul), sum(clip_durhs.dad_qt_vazaodiaago),
-                  sum(clip_durhs.dad_qt_vazaodiaset), sum(clip_durhs.dad_qt_vazaodiaout),
-                  sum(clip_durhs.dad_qt_vazaodianov), sum(clip_durhs.dad_qt_vazaodiadez)]
-  return total_durhs_mont,vaz_durhs_mont
+  vaz_durhs_mont = [sum(clip_durhs.dad_qt_vazaodiajan.fillna(0)), sum(clip_durhs.dad_qt_vazaodiafev.fillna(0)),
+                  sum(clip_durhs.dad_qt_vazaodiamar.fillna(0)), sum(clip_durhs.dad_qt_vazaodiaabr.fillna(0)),
+                  sum(clip_durhs.dad_qt_vazaodiamai.fillna(0)), sum(clip_durhs.dad_qt_vazaodiajun.fillna(0)),
+                  sum(clip_durhs.dad_qt_vazaodiajul.fillna(0)), sum(clip_durhs.dad_qt_vazaodiaago.fillna(0)),
+                  sum(clip_durhs.dad_qt_vazaodiaset.fillna(0)), sum(clip_durhs.dad_qt_vazaodiaout.fillna(0)),
+                  sum(clip_durhs.dad_qt_vazaodianov.fillna(0)), sum(clip_durhs.dad_qt_vazaodiadez.fillna(0))]
+  return total_durhs_mont, vaz_durhs_mont, dic
 
 #Durhs diferente de validadas
-def VazDurhsDif(location, subtrechos_joaoleite, durhs_joaoleite):
+def VazDurhsDif(location, subtrechos, durhs):
     dic = {"cocursodag": (location.iloc[0]['cocursodag']), "cobacia": (location.iloc[0]['cobacia']),
            "area_km2": (location.iloc[0]['area_km2'])}
     cobacia = dic.get("cobacia")
     cocursodag = dic.get("cocursodag")
-    sel_bacia = ((bacia_joaoleite['cocursodag'].str.contains(cocursodag)) & (bacia_joaoleite['cobacia'] > (cobacia)))
-    sel_bacia = bacia_joaoleite[sel_bacia]
-    sel_durhs = durhs_joaoleite.loc[(durhs_joaoleite['situacaodurh'] == 'Sujeita a outorga') |
-                                    (durhs_joaoleite['situacaodurh'] == 'Em Retificação') |
-                                    (durhs_joaoleite['situacaodurh'] == 'Enviada') |
-                                    (durhs_joaoleite['situacaodurh'] == 'Paralisada') |
-                                    (durhs_joaoleite['situacaodurh'] == 'Pendente')]
+    sel_bacia = ((bacia['cocursodag'].str.contains(cocursodag)) & (bacia['cobacia'] > (cobacia)))
+    sel_bacia = bacia[sel_bacia]
+    sel_durhs = durhs.loc[(durhs['situacaodurh'] == 'Sujeita a outorga') |
+                                    (durhs['situacaodurh'] == 'Em Retificação') |
+                                    (durhs['situacaodurh'] == 'Enviada') |
+                                    (durhs['situacaodurh'] == 'Paralisada') |
+                                    (durhs['situacaodurh'] == 'Pendente')]
     durhs_dif_mont = sel_durhs.clip(sel_bacia)
 
     durh_dif_jan = durhs_dif_mont[durhs_dif_mont['dad_qt_vazaodiajan'] != 0]
@@ -305,11 +285,11 @@ def VazDurhsDif(location, subtrechos_joaoleite, durhs_joaoleite):
 
 # Após passar no critério de localização, a função de análise é executada
 def analise(location):
-    total_outorgas, vazao_tot_cnarh = ConOutorgasTotaisAMontante(location,cnarh4_joaoleite,subtrechos_joaoleite)
-    DQ95ESPMES, Q95Local, Qoutorgavel = ConVazoesSazonais(location, durhs_joaoleite, subtrechos_joaoleite)
-    total_durhs_mont, vaz_durhs_mont = ConVazoesDurhsValid(location, durhs_joaoleite, subtrechos_joaoleite)
+    total_outorgas, vazao_tot_cnarh = ConOutorgasTotaisAMontante(location, cnarh40)
+    DQ95ESPMES, Q95Local, Qoutorgavel = ConVazoesSazonais(location, durhs, subtrechos)
+    total_durhs_mont, vaz_durhs_mont, dic = ConVazoesDurhsValid(location, durhs, subtrechos)
     dfinfos = getinfodurh(location)
-    dfdurhs = VazDurhsDif(location, subtrechos_joaoleite, durhs_joaoleite)  # durhs diferentes de validaadas
+    dfdurhs = VazDurhsDif(location, subtrechos, durhs)  # durhs diferentes de validaadas
     dfinfos['Q95 local l/s'] = Q95Local
     dfinfos['Q95 Esp l/s/km²'] = DQ95ESPMES
     dfinfos['Durhs val à mont'] = total_durhs_mont
@@ -325,14 +305,13 @@ def analise(location):
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 100, 'Nivel critico Bacia'] = 'Moderado Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 80, 'Nivel critico Bacia'] = 'Alerta'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 50, 'Nivel critico Bacia'] = 'Normal'
-    # print(dfinfos)
     return dfinfos
 
 
 # Função inicial para pegar a localização da Durh
-def getlocation(numero_durh, durhs_joaoleite, subtrechos_joaoleite):
-  point = durhs_joaoleite.loc[durhs_joaoleite['numerodurh']== numero_durh] # AQUI ENTRA NUMERO DA DURH
-  location = gpd.sjoin_nearest(point,subtrechos_joaoleite, how='inner')
+def getlocation(numero_durh, durhs, subtrechos):
+  point = durhs.loc[durhs['numerodurh'] == numero_durh]  # AQUI ENTRA NUMERO DA DURH
+  location = gpd.sjoin_nearest(point, subtrechos, how='inner')
   if (location.iloc[0]['q_q95espano'] == 0):
     print("Subtrecho em barragem/massa d'agua")  # FUTURO POP-UP DE NOTIFICAÇÃO
   else:
@@ -342,11 +321,6 @@ def getlocation(numero_durh, durhs_joaoleite, subtrechos_joaoleite):
     subbacia = point.iloc[0]['subbacia']
     analise(location)
   return point, location, mun_durh, corpodagua, subbacia
-
-# função inicial para rodar a localização
-#def run(numero_durh):
-#  location, point = getlocation(numero_durh,durhs_joaoleite,subtrechos_joaoleite)
-#  return numero_durh,location
 
 app = Flask(__name__)
 
@@ -358,7 +332,7 @@ def homepage():
 @app.route("/Resultados", methods=["POST", "GET"])
 def run():
     numero_durh = request.form['numero_durh']
-    point, location, mun_durh, corpodagua, subbacia = getlocation(numero_durh,durhs_joaoleite,subtrechos_joaoleite)
+    point, location, mun_durh, corpodagua, subbacia = getlocation(numero_durh,durhs,subtrechos)
     dfinfos = analise(location)
     return render_template('resultados.html',
                            numero_durh=numero_durh,
@@ -368,21 +342,10 @@ def run():
                            subbacia=subbacia,
                            tables=[dfinfos.to_html(classes='data', header="true")])
 
-
 @app.route("/")
 def return_to():
     return redirect(url_for("/"))
 
-
-
-#@app.route("/Resultados", methods=["GET"])
-#def resultados():
-#    dfinfos = run()
-#    return render_template('resultados.html', tables=[dfinfos.to_html(classes='data', header="true")])
-# DURH023031
-
 #Colocar o site no ar
 if __name__ == "__main__":
     app.run(debug=True)
-
-
