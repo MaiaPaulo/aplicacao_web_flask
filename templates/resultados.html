@@ -9,10 +9,22 @@
 <form action="/Resultados" method="POST">
     <center><img src="https://portal.meioambiente.go.gov.br/cnd/resources/imagens/logoGoiasSemad.png" width="250"></center>
     <div align="center"><b><font size="5">Valores referentes à posição da {{numero_durh}}</font></b>
-    <p><font size="4">{{analise}}</font></p>
-    <p><font size="4">Município: {{mun_durh}}</font></p>
-    <p><font size="4">Corpo D'água: {{corpodagua}}</font></p>
-    <p><font size="4">Sub-bacia: {{subbacia}}</font></p>
+    <p><font size="5">{{analise}}</font></p>
+    <table border="1">
+    <tr>
+    <td><font size="4">Município: {{mun_durh}}</font></td>
+    <td><font size="4">Corpo D'água: {{corpodagua}}</font></td>
+    <td><font size="4">Sub-bacia: {{subbacia}}</font></td>
+    <td><font size="4">Lat.: {{lat}}</font></td>
+    </tr>
+    <tr>
+    <td><font size="4">Ádea em km²: {{area}}</font></td>
+    <td><font size="4">Processo: {{numeroproc}}</font></td>
+    <td><font size="4">Uso: {{uso}}</font></td>
+    <td><font size="4">Lon.: {{lon}}</font></td>
+    </tr>
+    </table>
+        <br>
     {% for table in tables %}
         {{ table|safe }}
     {% endfor %}

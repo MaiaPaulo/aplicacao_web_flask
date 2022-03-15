@@ -49,7 +49,11 @@ FROM
     colnames = [key for key in data[0].keys()]
     data = pd.DataFrame(data, columns=colnames)
     data.fillna(np.nan, inplace=True)
-    return data
+    dic_infos = {'corpodagua': data.iloc[0]['corpodagua'], 'subbacia': data.iloc[0]['subbacia'],
+                 'municipio': data.iloc[0]['municipio'], 'area_km2': data.iloc[0]['area_km2'],
+                 'numeroprocesso': data.iloc[0]['numeroprocesso'], 'finalidadeuso': data.iloc[0]['finalidadeuso'],
+                 'longitude': data.iloc[0]['longitude'], 'latitude': data.iloc[0]['latitude']}
+    return data, dic_infos
 
 
 async def get_minibacia(data):
@@ -194,49 +198,35 @@ AND d.pontointerferencia = 'Captação Superficial')
     df_durhs_select = pd.DataFrame(durhs_select, columns=colnames)
     gdf_durhs_select = gpd.GeoDataFrame(df_durhs_select)
     gdf_durhs_select['geometry'] = gpd.GeoSeries.from_wkb(gdf_durhs_select['geometry'])
-    gdf_durhs_select.iloc[:, 0:3] = gdf_durhs_select.iloc[:, 0:3].astype(str)
     gdf_durhs_select.set_crs(epsg='3857', inplace=True)
     gdf_durhs_select.fillna(np.nan, inplace=True)
-    tot_durh_jan = gdf_durhs_select['dad_qt_vazaodiajan'] != 0
-    count_durhs_jan = tot_durh_jan.count()
-    tot_durh_fev = gdf_durhs_select['dad_qt_vazaodiafev'] != 0
-    count_durhs_fev = tot_durh_fev.count()
-    tot_durh_mar = gdf_durhs_select['dad_qt_vazaodiamar'] != 0
-    count_durhs_mar = tot_durh_mar.count()
-    tot_durh_abr = gdf_durhs_select['dad_qt_vazaodiaabr'] != 0
-    count_durhs_abr = tot_durh_abr.count()
-    tot_durh_mai = gdf_durhs_select['dad_qt_vazaodiamai'] != 0
-    count_durhs_mai = tot_durh_mai.count()
-    tot_durh_jun = gdf_durhs_select['dad_qt_vazaodiajun'] != 0
-    count_durhs_jun = tot_durh_jun.count()
-    tot_durh_jul = gdf_durhs_select['dad_qt_vazaodiajul'] != 0
-    count_durhs_jul = tot_durh_jul.count()
-    tot_durh_ago = gdf_durhs_select['dad_qt_vazaodiaago'] != 0
-    count_durhs_ago = tot_durh_ago.count()
-    tot_durh_set = gdf_durhs_select['dad_qt_vazaodiaset'] != 0
-    count_durhs_set = tot_durh_set.count()
-    tot_durh_out = gdf_durhs_select['dad_qt_vazaodiaout'] != 0
-    count_durhs_out = tot_durh_out.count()
-    tot_durh_nov = gdf_durhs_select['dad_qt_vazaodianov'] != 0
-    count_durhs_nov = tot_durh_nov.count()
-    tot_durh_dez = gdf_durhs_select['dad_qt_vazaodiadez'] != 0
-    count_durhs_dez = tot_durh_dez.count()
+    gdf_durhs_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = \
+        gdf_durhs_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(str)
+    tot_durh_jan = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiajan'] != "nan"]
+    tot_durh_fev = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiafev'] != "nan"]
+    tot_durh_mar = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiamar'] != "nan"]
+    tot_durh_abr = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiaabr'] != "nan"]
+    tot_durh_mai = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiamai'] != "nan"]
+    tot_durh_jun = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiajun'] != "nan"]
+    tot_durh_jul = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiajul'] != "nan"]
+    tot_durh_ago = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiaago'] != "nan"]
+    tot_durh_set = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiaset'] != "nan"]
+    tot_durh_out = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiaout'] != "nan"]
+    tot_durh_nov = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodianov'] != "nan"]
+    tot_durh_dez = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiadez'] != "nan"]
+    gdf_durhs_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = \
+        gdf_durhs_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(float)
     # Produtos finais adquiridos no return
-    total_durhs_mont = [count_durhs_jan, count_durhs_fev, count_durhs_mar, count_durhs_abr,
-                        count_durhs_mai, count_durhs_jun, count_durhs_jul, count_durhs_ago,
-                        count_durhs_set, count_durhs_out, count_durhs_nov, count_durhs_dez]
-    vaz_durhs_mont = [sum(gdf_durhs_select.dad_qt_vazaodiajan.fillna(0)),
-                      sum(gdf_durhs_select.dad_qt_vazaodiafev.fillna(0)),
-                      sum(gdf_durhs_select.dad_qt_vazaodiamar.fillna(0)),
-                      sum(gdf_durhs_select.dad_qt_vazaodiaabr.fillna(0)),
-                      sum(gdf_durhs_select.dad_qt_vazaodiamai.fillna(0)),
-                      sum(gdf_durhs_select.dad_qt_vazaodiajun.fillna(0)),
-                      sum(gdf_durhs_select.dad_qt_vazaodiajul.fillna(0)),
-                      sum(gdf_durhs_select.dad_qt_vazaodiaago.fillna(0)),
-                      sum(gdf_durhs_select.dad_qt_vazaodiaset.fillna(0)),
-                      sum(gdf_durhs_select.dad_qt_vazaodiaout.fillna(0)),
-                      sum(gdf_durhs_select.dad_qt_vazaodianov.fillna(0)),
-                      sum(gdf_durhs_select.dad_qt_vazaodiadez.fillna(0))]
+    total_durhs_mont = [tot_durh_jan.gml_id.count(), tot_durh_fev.gml_id.count(), tot_durh_mar.gml_id.count(),
+                        tot_durh_abr.gml_id.count(), tot_durh_mai.gml_id.count(), tot_durh_jun.gml_id.count(),
+                        tot_durh_jul.gml_id.count(), tot_durh_ago.gml_id.count(), tot_durh_set.gml_id.count(),
+                        tot_durh_out.gml_id.count(), tot_durh_nov.gml_id.count(), tot_durh_dez.gml_id.count()]
+    vaz_durhs_mont = [np.nansum(gdf_durhs_select.dad_qt_vazaodiajan), np.nansum(gdf_durhs_select.dad_qt_vazaodiafev),
+                      np.nansum(gdf_durhs_select.dad_qt_vazaodiamar), np.nansum(gdf_durhs_select.dad_qt_vazaodiaabr),
+                      np.nansum(gdf_durhs_select.dad_qt_vazaodiamai), np.nansum(gdf_durhs_select.dad_qt_vazaodiajun),
+                      np.nansum(gdf_durhs_select.dad_qt_vazaodiajul), np.nansum(gdf_durhs_select.dad_qt_vazaodiaago),
+                      np.nansum(gdf_durhs_select.dad_qt_vazaodiaset), np.nansum(gdf_durhs_select.dad_qt_vazaodiaout),
+                      np.nansum(gdf_durhs_select.dad_qt_vazaodianov), np.nansum(gdf_durhs_select.dad_qt_vazaodiadez)]
     return total_durhs_mont, vaz_durhs_mont
 
 
@@ -270,65 +260,52 @@ AND cn.int_tch_ds = 'Rio ou Curso D''Água')
     gdf_cnarh_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = gdf_cnarh_select.loc[:,
                                                                          'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(
         str).stack().str.replace(',', '.', regex=True).unstack()
-    # gdf_cnarh_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = gdf_cnarh_select.loc[:,
-    #                                                                      'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].replace(
-    #     "None", "0")
+    tot_cnarh_jan = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiajan'] != "nan"]
+    tot_cnarh_fev = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiafev'] != "nan"]
+    tot_cnarh_mar = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiamar'] != "nan"]
+    tot_cnarh_abr = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiaabr'] != "nan"]
+    tot_cnarh_mai = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiamai'] != "nan"]
+    tot_cnarh_jun = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiajun'] != "nan"]
+    tot_cnarh_jul = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiajul'] != "nan"]
+    tot_cnarh_ago = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiaago'] != "nan"]
+    tot_cnarh_set = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiaset'] != "nan"]
+    tot_cnarh_out = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiaout'] != "nan"]
+    tot_cnarh_nov = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodianov'] != "nan"]
+    tot_cnarh_dez = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiadez'] != "nan"]
+    # Conteagem de outorgar à montante != nan
+    tot_out = [tot_cnarh_jan.id.count(), tot_cnarh_fev.id.count(), tot_cnarh_mar.id.count(),
+               tot_cnarh_abr.id.count(), tot_cnarh_mai.id.count(), tot_cnarh_jun.id.count(),
+               tot_cnarh_jul.id.count(), tot_cnarh_ago.id.count(), tot_cnarh_set.id.count(),
+               tot_cnarh_out.id.count(), tot_cnarh_nov.id.count(), tot_cnarh_dez.id.count()]
     gdf_cnarh_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = gdf_cnarh_select.loc[:,
                                                                          'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(
         float)
-    tot_cnarh_jan = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiajan'] != 0]
-    count_cnarh_jan = tot_cnarh_jan[tot_cnarh_jan.columns[0]].count()
-    tot_cnarh_fev = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiafev'] != 0]
-    count_cnarh_fev = tot_cnarh_fev[tot_cnarh_fev.columns[0]].count()
-    tot_cnarh_mar = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiamar'] != 0]
-    count_cnarh_mar = tot_cnarh_mar[tot_cnarh_mar.columns[0]].count()
-    tot_cnarh_abr = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiaabr'] != 0]
-    count_cnarh_abr = tot_cnarh_abr[tot_cnarh_abr.columns[0]].count()
-    tot_cnarh_mai = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiamai'] != 0]
-    count_cnarh_mai = tot_cnarh_mai[tot_cnarh_mai.columns[0]].count()
-    tot_cnarh_jun = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiajun'] != 0]
-    count_cnarh_jun = tot_cnarh_jun[tot_cnarh_jun.columns[0]].count()
-    tot_cnarh_jul = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiajul'] != 0]
-    count_cnarh_jul = tot_cnarh_jul[tot_cnarh_jul.columns[0]].count()
-    tot_cnarh_ago = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiaago'] != 0]
-    count_cnarh_ago = tot_cnarh_ago[tot_cnarh_ago.columns[0]].count()
-    tot_cnarh_set = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiaset'] != 0]
-    count_cnarh_set = tot_cnarh_set[tot_cnarh_set.columns[0]].count()
-    tot_cnarh_out = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiaout'] != 0]
-    count_cnarh_out = tot_cnarh_out[tot_cnarh_out.columns[0]].count()
-    tot_cnarh_nov = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodianov'] != 0]
-    count_cnarh_nov = tot_cnarh_nov[tot_cnarh_nov.columns[0]].count()
-    tot_cnarh_dez = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiadez'] != 0]
-    count_cnarh_dez = tot_cnarh_dez[tot_cnarh_dez.columns[0]].count()
-    total_outorgas = [count_cnarh_jan, count_cnarh_fev, count_cnarh_mar, count_cnarh_abr,
-                      count_cnarh_mai, count_cnarh_jun, count_cnarh_jul, count_cnarh_ago,
-                      count_cnarh_set, count_cnarh_out, count_cnarh_nov, count_cnarh_dez]
     # Soma da DAD_QT_VAZAODIAMES e converter p L/s (*1000)/3600
-    vazao_tot_cnarh = [round(sum(gdf_cnarh_select['dad_qt_vazaodiajan'] / 3.6), 2),
-                       round(sum(gdf_cnarh_select['dad_qt_vazaodiafev'] / 3.6), 2),
-                       round(sum(gdf_cnarh_select['dad_qt_vazaodiamar'] / 3.6), 2),
-                       round(sum(gdf_cnarh_select['dad_qt_vazaodiaabr'] / 3.6), 2),
-                       round(sum(gdf_cnarh_select['dad_qt_vazaodiamai'] / 3.6), 2),
-                       round(sum(gdf_cnarh_select['dad_qt_vazaodiajun'] / 3.6), 2),
-                       round(sum(gdf_cnarh_select['dad_qt_vazaodiajul'] / 3.6), 2),
-                       round(sum(gdf_cnarh_select['dad_qt_vazaodiaago'] / 3.6), 2),
-                       round(sum(gdf_cnarh_select['dad_qt_vazaodiaset'] / 3.6), 2),
-                       round(sum(gdf_cnarh_select['dad_qt_vazaodiaout'] / 3.6), 2),
-                       round(sum(gdf_cnarh_select['dad_qt_vazaodianov'] / 3.6), 2),
-                       round(sum(gdf_cnarh_select['dad_qt_vazaodiadez'] / 3.6), 2)]
-    return total_outorgas, vazao_tot_cnarh
+    vaz_tot_cnarh = [round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiajan'] / 3.6), 2),
+                       round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiafev'] / 3.6), 2),
+                       round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiamar'] / 3.6), 2),
+                       round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiaabr'] / 3.6), 2),
+                       round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiamai'] / 3.6), 2),
+                       round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiajun'] / 3.6), 2),
+                       round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiajul'] / 3.6), 2),
+                       round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiaago'] / 3.6), 2),
+                       round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiaset'] / 3.6), 2),
+                       round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiaout'] / 3.6), 2),
+                       round(np.nansum(gdf_cnarh_select['dad_qt_vazaodianov'] / 3.6), 2),
+                       round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiadez'] / 3.6), 2)]
+    return tot_out, vaz_tot_cnarh
 
 
 def anals_without_durh(data):
-    total_outorgas, vazao_tot_cnarh = loop.run_until_complete(get_cnarh40_mont(data))
+    tot_out, vaz_tot_cnarh = loop.run_until_complete(get_cnarh40_mont(data))
     DQ95ESPMES, Q95Local, Qoutorgavel = ConVazoesSazonais(data)
     dfinfos = getinfodurh(data)
     analise = "Sem Durhs à Montante"
     dfinfos['Q95 local l/s'] = Q95Local
     dfinfos['Q95 Esp l/s/km²'] = DQ95ESPMES
-    dfinfos["Qnt de outorgas à mont "] = total_outorgas
-    dfinfos["Vazao Total cnarh Montante L/s"] = vazao_tot_cnarh
-    dfinfos['Vazão Total à Montante'] = vazao_tot_cnarh
+    dfinfos["Qnt de outorgas à mont "] = tot_out
+    dfinfos["Vazao Total cnarh Montante L/s"] = vaz_tot_cnarh
+    dfinfos['Vazão Total à Montante'] = vaz_tot_cnarh
     dfinfos["Comprom individual(%)"] = (dfinfos['Vazão/Dia'] / (dfinfos['Q95 local l/s'] * 0.5)) * 100
     dfinfos["Comprom bacia(%)"] = ((dfinfos['Vazão/Dia'] + dfinfos['Vazão Total à Montante']) / (dfinfos['Q95 local l/s'] * 0.5)) * 100
     dfinfos["Q outorgável"] = Qoutorgavel
@@ -341,7 +318,7 @@ def anals_without_durh(data):
 
 
 def anals_complete(data):
-    total_outorgas, vazao_tot_cnarh = loop.run_until_complete(get_cnarh40_mont(data))
+    tot_out, vaz_tot_cnarh = loop.run_until_complete(get_cnarh40_mont(data))
     DQ95ESPMES, Q95Local, Qoutorgavel = ConVazoesSazonais(data)
     total_durhs_mont, vaz_durhs_mont = loop.run_until_complete(get_valid_durhs(data))
     analise = "Durhs e Outorgas à Montante"
@@ -350,17 +327,19 @@ def anals_complete(data):
     dfinfos['Q95 Esp l/s/km²'] = DQ95ESPMES
     dfinfos['Durhs val à mont'] = total_durhs_mont
     dfinfos['vazao total Durhs Montante'] = vaz_durhs_mont
-    dfinfos["Qnt de outorgas à mont "] = total_outorgas
-    dfinfos["Vazao Total cnarh Montante L/s"] = vazao_tot_cnarh
-    dfinfos['Vazão Total à Montante'] = [(x + y) for x, y in zip(vazao_tot_cnarh, vaz_durhs_mont)]
-    dfinfos["Comprom individual(%)"] = round((dfinfos['Vazão/Dia'] / (dfinfos['Q95 local l/s'] * 0.5)) * 100, 2)
-    dfinfos["Comprom bacia(%)"] = round(((dfinfos['Vazão/Dia'] + dfinfos['Vazão Total à Montante']) / (dfinfos['Q95 local l/s'] * 0.5)) * 100, 2)
+    dfinfos["Qnt de outorgas à mont "] = tot_out
+    dfinfos["Vazao Total cnarh Montante L/s"] = vaz_tot_cnarh
+    dfinfos['Vazão Total à Montante'] = [(x + y) for x, y in zip(vaz_tot_cnarh, vaz_durhs_mont)]
+    dfinfos["Comprom individual(%)"] = (dfinfos['Vazão/Dia'] / (dfinfos['Q95 local l/s'] * 0.5)) * 100
+    dfinfos["Comprom bacia(%)"] = ((dfinfos['Vazão/Dia'] + dfinfos['Vazão Total à Montante']) /
+                                   (dfinfos['Q95 local l/s'] * 0.5)) * 100
     dfinfos["Q outorgável"] = Qoutorgavel
     dfinfos["Q disponível"] = [(x - y - z) for x, y, z in zip(Q95Local, Qoutorgavel, (dfinfos['Vazão Total à Montante']))]
     dfinfos.loc[dfinfos['Comprom bacia(%)'] > 100, 'Nivel critico Bacia'] = 'Alto Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 100, 'Nivel critico Bacia'] = 'Moderado Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 80, 'Nivel critico Bacia'] = 'Alerta'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 50, 'Nivel critico Bacia'] = 'Normal'
+    dfinfos = dfinfos.round(decimals=2)
     return dfinfos, analise
 
 def anals_without_cnarh(data):
@@ -418,10 +397,15 @@ def homepage():
 @app.route("/Resultados", methods=["POST", "GET"])
 def run():
     numero_durh = request.form['numero_durh']
-    data = run_f(numero_durh)
-    corpodagua = data.iloc[0]['corpodagua']
-    subbacia = data.iloc[0]['subbacia']
-    mun_durh = data.iloc[0]['municipio']
+    data, dic_infos = loop.run_until_complete(main(numero_durh))
+    corpodagua = dic_infos.get('corpodagua')
+    subbacia = dic_infos.get('subbacia')
+    mun_durh = dic_infos.get('municipio')
+    area = round(dic_infos.get('area_km2'), 2)
+    numeroproc = dic_infos.get('numeroprocesso')
+    uso = dic_infos.get('finalidadeuso')
+    lat = dic_infos.get('latitude')
+    lon = dic_infos.get('longitude')
     durhs_teste, cnarh_teste = loop.run_until_complete(get_tests(data))
     if (len(durhs_teste) & len(cnarh_teste)) != 0:
         dfinfos, analise = anals_complete(data)
@@ -432,12 +416,11 @@ def run():
     else:
         dfinfos, analise = anals_without_cnarh(data)
     return render_template('resultados.html',
-                           numero_durh=numero_durh,
-                           dfinfos=dfinfos,
-                           mun_durh=mun_durh,
-                           corpodagua=corpodagua,
-                           subbacia=subbacia,
-                           analise=analise,
+                           numero_durh=numero_durh, dfinfos=dfinfos,
+                           mun_durh=mun_durh, corpodagua=corpodagua,
+                           subbacia=subbacia, analise=analise,
+                           area=area, numeroproc=numeroproc,
+                           lat=lat, lon=lon, uso=uso,
                            tables=[dfinfos.to_html(classes='data', header="true")])
 
 @app.route("/")
@@ -483,14 +466,10 @@ if __name__ == "__main__":
 
 
  #   Durh:
- #   Numero do processo
- #   Numero da durh
- #   Lat Long
- #   corpo d'agua
- #   finalidade de uso
- #   subbacia
+ #   Numero do processo  ['numeroprocesso']
+ #   Lat Long            ['longitude', 'latitude']
+ #   finalidade de uso   ['finalidadeuso']
  #
  #   Subtrechos:
- #   area_km2
+ #   area_km2            ['area_km2']
  #   manancial
- #
