@@ -9,6 +9,7 @@ from flask import Flask, render_template, request, send_file, make_response
 loop = asyncio.get_event_loop()
 
 
+# FUNÇÃO PARA ADQUIRIR DADOS DO SUBTRECHO MAIS PROX À DURH ANALISADA
 async def main(numero_durh):
     conn = await asyncpg.connect('postgresql://adm_geout:ssdgeout@10.207.30.15:5432/geout')
     numerodurh = numero_durh
@@ -45,7 +46,6 @@ FROM
   ) As sel 
         """)
     await conn.close()
-    print(data)
     colnames = [key for key in data[0].keys()]
     data = pd.DataFrame(data, columns=colnames)
     data.fillna(np.nan, inplace=True)
@@ -55,7 +55,7 @@ FROM
                  'longitude': data.iloc[0]['longitude'], 'latitude': data.iloc[0]['latitude']}
     return data, dic_infos
 
-
+# SELECIONAR MINI BACIAS
 async def get_minibacia(data):
     cobacia = data.loc[0]['cobacia']
     cocursodag = data.loc[0]['cocursodag']
@@ -75,6 +75,7 @@ WHERE ((o.cocursodag) LIKE ('{cocursodag}%')) AND ((o.cobacia) >= ('{cobacia}'))
     return gdf, df
 
 
+# TESTE PARA SABER SE POSSUI DURHS E OUTORGAS À MONTANTE
 async def get_tests(data):
     cobacia = data.loc[0]['cobacia']
     cocursodag = data.loc[0]['cocursodag']
@@ -106,7 +107,6 @@ AND d.pontointerferencia = 'Captação Superficial')
 
 # Cálculo das Vazões sazonais com base na cobacia do subtrecho
 # UNIDADE SAI EM m³/s
-
 def ConVazoesSazonais(data):
     DQ95ESPMES = [data.iloc[0]['q_q95espjan'], data.iloc[0]['q_q95espfev'],
                   data.iloc[0]['q_q95espmar'], data.iloc[0]['q_q95espabr'],
@@ -177,8 +177,7 @@ def getinfodurh(data):
     return dfinfos
 
 
-# FUNÇÃO DE VAZAO DAS DURHS VALIDADAS
-
+# CONSULTA DE VAZAO DAS DURHS VALIDADAS
 async def get_valid_durhs(data):
     cobacia = data.loc[0]['cobacia']
     cocursodag = data.loc[0]['cocursodag']
@@ -231,8 +230,6 @@ AND d.pontointerferencia = 'Captação Superficial')
 
 
 # CONSULTA DE VAZOES DAS OUTORGAS À MONTANTE
-
-
 async def get_cnarh40_mont(data):
     cobacia = data.loc[0]['cobacia']
     cocursodag = data.loc[0]['cocursodag']
@@ -376,14 +373,6 @@ def anals_no_mont(data):
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 50, 'Nivel critico Bacia'] = 'Normal'
     return dfinfos, analise
 
-# função inicial para rodar a localização
-def run_f(numero_durh):
-    data = loop.run_until_complete(main(numero_durh))
-    if (data.iloc[0]['q_q95espano'] == 0):
-        print("Subtrecho em barragem/massa d'agua")  # FUTURO POP-UP DE NOTIFICAÇÃO
-    else:
-        print("Subtrecho fora de barragem/massa d'agua")
-    return data
 
 app = Flask(__name__)
 
@@ -428,48 +417,6 @@ def return_to():
     return redirect(url_for("/"))
 
 # Colocar o site no ar
-# DURH001452
-
 if __name__ == "__main__":
     app.run(debug=True)
 
-
-
-    # def run():
-    #     numero_durh = request.form['numero_durh']
-    #     data = run_f(numero_durh)
-    #     corpodagua = data['corpodagua']
-    #     subbacia = data['subbacia']
-    #     mun_durh = data['municipio']
-    #     durhs_teste, cnarh_teste = loop.run_until_complete(get_tests(data))
-    #     if (len(durhs_teste) & len(cnarh_teste)) == 0:
-    #         dfinfos = anals_without_durh(data)
-    #     else:
-    #         dfinfos = anals_with_durh(data)
-    #     return render_template('resultados.html',
-    #                            numero_durh=numero_durh,
-    #                            dfinfos=dfinfos,
-    #                            mun_durh=mun_durh,
-    #                            corpodagua=corpodagua,
-    #                            subbacia=subbacia,
-    #                            tables=[dfinfos.to_html(classes='data', header="true")])
-
-    # for i in dfinfos['Comprom bacia(%)']:
-    #     if dfinfos['Comprom bacia(%)'] > 100:
-    #         dfinfos['Nivel Critico Bacia'] = 'Alto critico'
-    #     elif dfinfos['Comprom bacia(%)'] <= 100:
-    #         dfinfos['Nivel Critico Bacia'] = 'Moderado Critico'
-    #     elif dfinfos['Comprom bacia(%)'] <= 80:
-    #         dfinfos['Nivel Critico Bacia'] = 'Alerta'
-    #     else:
-    #         dfinfos['Nivel Critico Bacia'] = 'Normal'
-
-
- #   Durh:
- #   Numero do processo  ['numeroprocesso']
- #   Lat Long            ['longitude', 'latitude']
- #   finalidade de uso   ['finalidadeuso']
- #
- #   Subtrechos:
- #   area_km2            ['area_km2']
- #   manancial
