@@ -311,6 +311,7 @@ def anals_without_durh(data):
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 100, 'Nivel critico Bacia'] = 'Moderado Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 80, 'Nivel critico Bacia'] = 'Alerta'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 50, 'Nivel critico Bacia'] = 'Normal'
+    dfinfos = dfinfos.round(decimals=2)
     return dfinfos, analise
 
 
@@ -356,6 +357,7 @@ def anals_without_cnarh(data):
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 100, 'Nivel critico Bacia'] = 'Moderado Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 80, 'Nivel critico Bacia'] = 'Alerta'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 50, 'Nivel critico Bacia'] = 'Normal'
+    dfinfos = dfinfos.round(decimals=2)
     return dfinfos, analise
 
 def anals_no_mont(data):
@@ -371,6 +373,7 @@ def anals_no_mont(data):
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 100, 'Nivel critico Bacia'] = 'Moderado Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 80, 'Nivel critico Bacia'] = 'Alerta'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 50, 'Nivel critico Bacia'] = 'Normal'
+    dfinfos = dfinfos.round(decimals=2)
     return dfinfos, analise
 
 
@@ -398,7 +401,7 @@ def run():
     durhs_teste, cnarh_teste = loop.run_until_complete(get_tests(data))
     if (len(durhs_teste) & len(cnarh_teste)) != 0:
         dfinfos, analise = anals_complete(data)
-    elif (len(durhs_teste) & len(cnarh_teste)) == 0:
+    elif (len(durhs_teste) == 0) & (len(cnarh_teste) == 0):
         dfinfos, analise = anals_no_mont(data)
     elif (len(durhs_teste) == 0) & (len(cnarh_teste) != 0):
         dfinfos, analise = anals_without_durh(data)
@@ -420,3 +423,4 @@ def return_to():
 if __name__ == "__main__":
     app.run(debug=True)
 
+## DURH031390
