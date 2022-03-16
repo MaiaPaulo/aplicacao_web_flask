@@ -88,7 +88,7 @@ WHERE ST_within(ST_Transform(d.geometry, 3857), (SELECT ST_UNION(ST_GeomFromEWKB
                          WHERE ((o.cocursodag) LIKE ('{cocursodag}%')) 
                          AND ((o.cobacia) >= ('{cobacia}')))
          )
-AND (d.situacaodurh = 'Validada' 
+AND (d.situacaodurh <> 'Sujeita a outorga' 
 AND d.pontointerferencia = 'Captação Superficial')
     """)
     cnarh_teste = await conn.fetch(f"""
@@ -191,7 +191,7 @@ WHERE ST_within(ST_Transform(d.geometry, 3857), (SELECT ST_UNION(ST_GeomFromEWKB
                          WHERE ((o.cocursodag) LIKE ('{cocursodag}%')) 
                          AND ((o.cobacia) >= ('{cobacia}')))
          )
-AND (d.situacaodurh = 'Validada' 
+AND (d.situacaodurh <> 'Sujeita a outorga' 
 AND d.pontointerferencia = 'Captação Superficial')
     """)
     colnames = [key for key in durhs_select[0].keys()]
@@ -424,9 +424,3 @@ def return_to():
 if __name__ == "__main__":
     app.run(debug=True)
 
-## DURH031390
-
-## DURH    12712020 - DURH008200
-# 12702020  DURH008201
-# 12722020  DURH008218
-# 60872021  DURH016463
