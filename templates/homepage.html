@@ -2,17 +2,29 @@
 
 <html lang="en">
 <head>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
     <meta charset="UTF-8">
     <title>Disponibilidade Hídrica</title>
 </head>
 <body>
- <center><img src="https://portal.meioambiente.go.gov.br/sdl/imagens/logoSdlSemad.png;jsessionid=376BEEC68BF5A7A834DF7E19B17EFCE4"></center>
+ <center><img id="head" src="https://portal.meioambiente.go.gov.br/sdl/imagens/logoSdlSemad.png;jsessionid=376BEEC68BF5A7A834DF7E19B17EFCE4"></center>
 <br><br><br><br><br><br>
-    <form action="/Resultados" method="POST">
-            <center><b><font size="5"> Insira o número da Durh:</font></b></center>
-            <center><p><input type="text" name="numero_durh"/></p></center>
-            <center><p><input type="submit" value="Obter resultados" /></p></center>
+    <form id="form" action="/Resultados" method="POST">
+            <center><b><font id="text" size="5"> Insira o número da Durh:</font></b></center>
+            <center><p><input id="enter" type="text" name="numero_durh"/></p></center>
+            <center><p><input id="submit" type="submit" value="Obter resultados" onclick="$('#loading').show();"/></p></center>
+            <center><div id="loading" style="display:none;"><img src="https://legalnoodle.com/wp-content/uploads/2016/07/1351658479212-dumpfm-FAUXreal-water-drop2.gif" alt="" /></div></center>
     </form>
-
+<script type="text/javascript">
+(function (d) {
+  d.getElementById('form').onsubmit = function () {
+    d.getElementById('head').style.display = 'none';
+    d.getElementById('text').style.display = 'none';
+    d.getElementById('enter').style.display = 'none';
+    d.getElementById('submit').style.display = 'none';
+    d.getElementById('loading').style.display = 'block';
+  };
+}(document));
+</script>
 </body>
 </html>
