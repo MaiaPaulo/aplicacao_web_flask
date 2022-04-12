@@ -307,7 +307,7 @@ def anals_without_durh(data):
     dfinfos["Comprom individual(%)"] = (dfinfos['Vazão/Dia'] / Qoutorgavel) * 100
     dfinfos["Comprom bacia(%)"] = ((dfinfos['Vazão/Dia'] + dfinfos['Vazão Total à Montante']) / Qoutorgavel) * 100
     dfinfos["Q outorgável"] = Qoutorgavel
-    dfinfos["Q disponível"] = [(x - y - z) for x, y, z in zip(Q95Local, Qoutorgavel, (dfinfos['Vazão Total à Montante']))]
+    dfinfos["Q disponível"] = [(x - y) for x, y in zip(Qoutorgavel, (dfinfos['Vazão Total à Montante']))]
     dfinfos.loc[dfinfos['Comprom bacia(%)'] > 100, 'Nivel critico Bacia'] = 'Alto Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 100, 'Nivel critico Bacia'] = 'Moderado Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 80, 'Nivel critico Bacia'] = 'Alerta'
@@ -333,7 +333,7 @@ def anals_complete(data):
     dfinfos["Comprom bacia(%)"] = ((dfinfos['Vazão/Dia'] + dfinfos['Vazão Total à Montante']) /
                                    Qoutorgavel) * 100
     dfinfos["Q outorgável"] = Qoutorgavel
-    dfinfos["Q disponível"] = [(x - y - z) for x, y, z in zip(Q95Local, Qoutorgavel, (dfinfos['Vazão Total à Montante']))]
+    dfinfos["Q disponível"] = [(x - y) for x, y in zip(Qoutorgavel, (dfinfos['Vazão Total à Montante']))]
     dfinfos.loc[dfinfos['Comprom bacia(%)'] > 100, 'Nivel critico Bacia'] = 'Alto Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 100, 'Nivel critico Bacia'] = 'Moderado Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 80, 'Nivel critico Bacia'] = 'Alerta'
@@ -353,7 +353,7 @@ def anals_without_cnarh(data):
     dfinfos["Comprom individual(%)"] = round((dfinfos['Vazão/Dia'] / Qoutorgavel) * 100, 2)
     dfinfos["Comprom bacia(%)"] = round(((dfinfos['Vazão/Dia'] + dfinfos['Vazão Total à Montante']) / Qoutorgavel) * 100, 2)
     dfinfos["Q outorgável"] = Qoutorgavel
-    dfinfos["Q disponível"] = [(x - y - z) for x, y, z in zip(Q95Local, Qoutorgavel, (dfinfos['Vazão Total à Montante']))]
+    dfinfos["Q disponível"] = [(x - y) for x, y in zip(Qoutorgavel, (dfinfos['Vazão Total à Montante']))]
     dfinfos.loc[dfinfos['Comprom bacia(%)'] > 100, 'Nivel critico Bacia'] = 'Alto Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 100, 'Nivel critico Bacia'] = 'Moderado Critico'
     dfinfos.loc[dfinfos['Comprom bacia(%)'] <= 80, 'Nivel critico Bacia'] = 'Alerta'
