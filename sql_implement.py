@@ -33,6 +33,7 @@ FROM
      WHERE d.numerodurh = '{numerodurh}' AND
          mini.cobacia = (SELECT mini.cobacia
                            FROM
+                        
                            durhs_filtradas_completas AS d,
                            otto_minibacias_pol_100k AS mini
                            WHERE
@@ -400,7 +401,7 @@ def run():
     lat = dic_infos.get('latitude')
     lon = dic_infos.get('longitude')
     durhs_teste, cnarh_teste = loop.run_until_complete(get_tests(data))
-    if (len(durhs_teste) & len(cnarh_teste)) != 0:
+    if (len(durhs_teste) != 0) & (len(cnarh_teste) != 0):
         dfinfos, analise = anals_complete(data)
     elif (len(durhs_teste) == 0) & (len(cnarh_teste) == 0):
         dfinfos, analise = anals_no_mont(data)
