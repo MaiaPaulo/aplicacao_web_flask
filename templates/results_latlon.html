@@ -7,7 +7,7 @@
 <body>
 
 <br><br><br>
-<form action="/Resultados" method="POST">
+<form action="/Resultados corrigidos" method="POST">
     <center><img src="https://portal.meioambiente.go.gov.br/cnd/resources/imagens/logoGoiasSemad.png" width="250"></center>
     <div align="center"><b><font size="5" color="#ff0000">{{rio_compare}}</font></b></div>
     <div align="center"><b><font size="5">Valores referentes à posição da {{numero_durh}}</font></b>
@@ -32,9 +32,9 @@
         {{ table|safe }}
     {% endfor %}
         <br>
-    <a href="{{url_for('return_to')}}"><input type="button" value="Inserir nova DURH"></a></div>
-        <br>
-    <center><a href="{{url_for('correcao')}}"><img src="C:\Users\paulo.smaia\Documents\PROJETOS\aplicacao_flask\button.png"><input type="button" value="Realizar análise corrigida"></a></center>
+
+    <center><a href="{{url_for('return_to')}}"><img src="https://play-lh.googleusercontent.com/sjY0YeMySx9TQOFFJgbRa-hJlFICKIKy2sELJB1z4MCwKRxlXNkhvS5G72ZHvK4sqA" width="60"></a></center>
+    </div>
 </form>
 </body>
 </html>

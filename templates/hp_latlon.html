@@ -9,22 +9,28 @@
 <body>
  <center><img id="head" src="https://portal.meioambiente.go.gov.br/sdl/imagens/logoSdlSemad.png;jsessionid=376BEEC68BF5A7A834DF7E19B17EFCE4"></center>
 <br><br><br><br><br><br>
-    <form id="form" action="/Resultados" method="POST">
+    <form id="form" action="/Resultados corrigidos" method="POST">
             <center><b><font id="text" size="5"> Insira o número da Durh:</font></b></center>
             <center><p><input id="enter" type="text" name="numero_durh"/></p></center>
-            <center><p><input id="submit" type="submit" value="Obter resultados" onclick="$('#loading').show();"/></p></center>
+            <center><b><font id="text_1" size="5"> Coordenadas corrigidas (Lon Lat):</font></b></center>
+            <center><p><input id="enter_1" type="text" name="coordenadas_lonlat"/></p></center>
             <center><div id="loading" style="display:none;"><img src="https://legalnoodle.com/wp-content/uploads/2016/07/1351658479212-dumpfm-FAUXreal-water-drop2.gif" alt="" /></div></center>
     </form>
-  <center><a id="redirect" href="{{url_for('correcao')}}"><input type="button" value="Análise corrigida"></a></center>
+ <br>
+ <center><button id="submit" form="form" onclick="$('#loading').show();" type="submit">Obter resultados</button></center>
+ <br>
+ <center><a id="anls_simp" href="{{url_for('homepage')}}"><input type="button" value="Análise simples"></a></center>
 
 <script type="text/javascript">
 (function (d) {
   d.getElementById('form').onsubmit = function () {
-    d.getElementById('redirect').style.display = 'none';
     d.getElementById('head').style.display = 'none';
     d.getElementById('text').style.display = 'none';
+    d.getElementById('text_1').style.display = 'none';
     d.getElementById('enter').style.display = 'none';
+    d.getElementById('enter_1').style.display = 'none';
     d.getElementById('submit').style.display = 'none';
+    d.getElementById('anls_simp').style.display = 'none';
     d.getElementById('loading').style.display = 'block';
   };
 }(document));
