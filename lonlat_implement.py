@@ -743,7 +743,7 @@ def run_c():
         rio_compare = 'Rio condiz com a base'
     else:
         rio_compare = 'Inconsistência no nome do rio em relação à base'
-    if (len(durhs_teste) & len(cnarh_teste)) != 0:
+    if (len(durhs_teste) != 0) & (len(cnarh_teste) != 0):
         dfinfos, analise = anals_complete_c(data_sub, data_durh)
     elif (len(durhs_teste) == 0) & (len(cnarh_teste) == 0):
         dfinfos, analise = anals_no_mont_c(data_sub, data_durh)
@@ -778,7 +778,7 @@ def run():
     else:
         rio_compare = 'Inconsistência no nome do rio em relação à base'
     durhs_teste, cnarh_teste = loop.run_until_complete(get_tests(data))
-    if (len(durhs_teste) & len(cnarh_teste)) != 0:
+    if (len(durhs_teste) != 0) & (len(cnarh_teste) != 0):
         dfinfos, analise = anals_complete(data)
     elif (len(durhs_teste) == 0) & (len(cnarh_teste) == 0):
         dfinfos, analise = anals_no_mont(data)
