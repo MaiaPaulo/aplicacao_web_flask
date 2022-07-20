@@ -6,6 +6,7 @@ import numpy as np
 from flask import Flask, render_template, request
 from django.shortcuts import redirect
 from flask import url_for
+import pygeos
 
 loop = asyncio.get_event_loop()
 

@@ -6,81 +6,9 @@ import numpy as np
 from flask import Flask, render_template, request
 from django.shortcuts import redirect
 from flask import url_for
+import pygeos
 
 loop = asyncio.get_event_loop()
-
-# CONSULTA DE VAZOES DAS OUTORGAS À JUSANTE
-async def get_cnarh40_mont(data):
-    cobacia = data.loc[0]['cobacia']
-    cocursodag = data.loc[0]['cocursodag']
-    lista_cocursodag = []
-    i = 0
-    while i < len(cocursodag):
-      if (cocursodag_int%2) == 0:
-          lista_cocursodag.append(str(cocursodag_int))
-          cocursodag_int = int(cocursodag_int/10)
-          i = i + 1
-      else:
-          cocursodag_int = int(cocursodag_int/10)
-          i = i + 1
-    lista_cocursodag = str(lista_cocursodag)
-    lista_cocursodag = lista_cocursodag[2:-2]
-    conn = await asyncpg.connect('postgresql://adm_geout:ssdgeout@10.207.30.15:5432/geout')
-    cnarh_select = await conn.fetch(f"""
-SELECT *
-FROM cnarh40_otto AS cn  
-WHERE ((cn.cocursodag) IN ('{lista_cocursodag}') 
-                         AND (cn.cobacia) < ('{cobacia}'))
-AND (cn.int_tin_ds = 'Captação' 
-AND cn.int_tch_ds = 'Rio ou Curso D''Água')
-    """)
-    colnames = [key for key in cnarh_select[0].keys()]
-    df_cnarh_select = pd.DataFrame(cnarh_select, columns=colnames)
-    gdf_cnarh_select = gpd.GeoDataFrame(df_cnarh_select)
-    gdf_cnarh_select['geom'] = gpd.GeoSeries.from_wkb(gdf_cnarh_select['geom'])
-    gdf_cnarh_select['geom'].set_crs(epsg='3857', inplace=True)
-    gdf_cnarh_select.fillna(np.nan, inplace=True)
-    gdf_cnarh_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = \
-        gdf_cnarh_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(
-        str).stack().str.replace('.', '', regex=True).unstack()
-    gdf_cnarh_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = \
-        gdf_cnarh_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(
-        str).stack().str.replace(',', '.', regex=True).unstack()
-    tot_cnarh_jan = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiajan'] != "nan"]
-    tot_cnarh_fev = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiafev'] != "nan"]
-    tot_cnarh_mar = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiamar'] != "nan"]
-    tot_cnarh_abr = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiaabr'] != "nan"]
-    tot_cnarh_mai = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiamai'] != "nan"]
-    tot_cnarh_jun = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiajun'] != "nan"]
-    tot_cnarh_jul = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiajul'] != "nan"]
-    tot_cnarh_ago = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiaago'] != "nan"]
-    tot_cnarh_set = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiaset'] != "nan"]
-    tot_cnarh_out = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiaout'] != "nan"]
-    tot_cnarh_nov = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodianov'] != "nan"]
-    tot_cnarh_dez = gdf_cnarh_select[gdf_cnarh_select['dad_qt_vazaodiadez'] != "nan"]
-    # Conteagem de outorgar à montante != nan
-    tot_out = [tot_cnarh_jan.id.count(), tot_cnarh_fev.id.count(), tot_cnarh_mar.id.count(),
-               tot_cnarh_abr.id.count(), tot_cnarh_mai.id.count(), tot_cnarh_jun.id.count(),
-               tot_cnarh_jul.id.count(), tot_cnarh_ago.id.count(), tot_cnarh_set.id.count(),
-               tot_cnarh_out.id.count(), tot_cnarh_nov.id.count(), tot_cnarh_dez.id.count()]
-    gdf_cnarh_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = \
-        gdf_cnarh_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(
-        float)
-    # Soma da DAD_QT_VAZAODIAMES e converter p L/s (*1000)/3600
-    vaz_tot_cnarh = [round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiajan'] / 3.6), 2),
-                     round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiafev'] / 3.6), 2),
-                     round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiamar'] / 3.6), 2),
-                     round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiaabr'] / 3.6), 2),
-                     round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiamai'] / 3.6), 2),
-                     round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiajun'] / 3.6), 2),
-                     round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiajul'] / 3.6), 2),
-                     round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiaago'] / 3.6), 2),
-                     round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiaset'] / 3.6), 2),
-                     round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiaout'] / 3.6), 2),
-                     round(np.nansum(gdf_cnarh_select['dad_qt_vazaodianov'] / 3.6), 2),
-                     round(np.nansum(gdf_cnarh_select['dad_qt_vazaodiadez'] / 3.6), 2)]
-    return tot_out, vaz_tot_cnarh
-
 
 async def main(numero_durh):
     conn = await asyncpg.connect('postgresql://adm_geout:ssdgeout@10.207.30.15:5432/geout')
@@ -100,7 +28,7 @@ FROM
      sub.q_q95espago, sub.q_q95espset, sub.q_q95espout, sub.q_q95espnov, sub.q_q95espdez,
      sub.q_dq95jan, sub.q_dq95fev, sub.q_dq95mar, sub.q_dq95abr, sub.q_dq95mai, sub.q_dq95jun,
      sub.q_dq95jul, sub.q_dq95ago, sub.q_dq95set, sub.q_dq95out, sub.q_dq95nov, sub.q_dq95dez, sub.q_q95espano,
-     ST_Distance(sub.geom, ST_Transform (d.geometry, 3857)) As act_dist, sub.q_noriocomp
+     ST_Distance(sub.geom, ST_Transform (d.geometry, 3857)) As act_dist, sub.q_noriocomp, sub.dist_foz
      FROM subtrechos AS sub, otto_minibacias_pol_100k AS mini, durhs_filtradas_completas AS d
      WHERE d.numerodurh = '{numerodurh}' AND
          mini.cobacia = (SELECT mini.cobacia
@@ -127,6 +55,43 @@ FROM
                  'longitude': data.iloc[0]['longitude'], 'latitude': data.iloc[0]['latitude'],
                  'q_noriocomp': data.iloc[0]['q_noriocomp']}
     return data, dic_infos
+
+# SELECIONAR DADOS SUBTRECHOS
+async def get_subdados(data):
+    cobacia = data.loc[0]['cobacia']
+    dist = data.loc[0]['dist_foz']
+    conn = await asyncpg.connect('postgresql://adm_geout:ssdgeout@10.207.30.15:5432/geout')
+    sub_select = await conn.fetch(f"""
+    SELECT *
+    FROM subtrechos_lages as sub 
+    where sub.cobacia = '{cobacia}'
+""")
+    cnarh_select = await conn.fetch(f"""
+SELECT *
+FROM cnarh40_otto AS cn
+WHERE cn.cobacia = '{cobacia}' AND (cn.int_tin_ds = 'Captação' 
+AND cn.int_tch_ds = 'Rio ou Curso D''Água') 
+""")
+    durh_select = await conn.fetch(f"""
+""")
+    await conn.close()
+    colnames_sub = [key for key in sub_select[0].keys()]
+    colnames_cnarh = [key for key in cnarh_select[0].keys()]
+    df_select_sub = pd.DataFrame(sub_select, columns=colnames_sub)
+    df_select_cnarh = pd.DataFrame(cnarh_select, columns=colnames_cnarh)
+    gdf_select_sub = gpd.GeoDataFrame(df_select_sub)
+    gdf_select_cnarh = gpd.GeoDataFrame(df_select_cnarh)
+    gdf_select_sub.rename(columns={'geom': 'geometry'}, inplace=True)
+    gdf_select_sub['geometry'] = gpd.geoseries.from_wkb(gdf_select_sub['geometry'])
+    gdf_select_cnarh['geometry'] = gpd.geoseries.from_wkb(gdf_select_cnarh['geometry'])
+    gdf_select_sub.set_crs(epsg='3857', inplace=True)
+    gdf_select_cnarh.set_crs(epsg='3857', inplace=True)
+    cnarh_sjoin = gpd.sjoin_nearest(gdf_select_cnarh, gdf_select_sub, how='inner')
+    sel_mont_cnarh = cnarh_sjoin.loc[(cnarh_sjoin['dist_foz'] > dist)]
+    sel_jus_cnarh = cnarh_sjoin.loc[(cnarh_sjoin['dist_foz'] < dist)]
+    # SELECIONAR DADO MAIOR QUE ATRIBUTO X  15285
+    return cnarh_sjoin, sel_mont_cnarh, sel_jus_cnarh
+
 
 
 # SELECIONAR MINI BACIAS
