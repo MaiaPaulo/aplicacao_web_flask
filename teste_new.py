@@ -87,7 +87,7 @@ AND cn.int_tch_ds = 'Rio ou Curso D''Água')
     gdf_select_sub.set_crs(epsg='3857', inplace=True)
     gdf_select_cnarh.set_crs(epsg='3857', inplace=True)
     cnarh_sjoin = gpd.sjoin_nearest(gdf_select_cnarh, gdf_select_sub, how='inner')
-    sel_mont_cnarh = cnarh_sjoin.loc[(cnarh_sjoin['dist_foz'] > dist)]
+    sel_mont_cnarh = cnarh_sjoin.loc[(cnarh_sjoin['dist_foz'] >= dist)]
     sel_jus_cnarh = cnarh_sjoin.loc[(cnarh_sjoin['dist_foz'] < dist)]
     # SELECIONAR DADO MAIOR QUE ATRIBUTO X  15285
     return cnarh_sjoin, sel_mont_cnarh, sel_jus_cnarh
