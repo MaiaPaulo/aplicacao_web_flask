@@ -29,7 +29,7 @@ FROM
      sub.q_dq95jan, sub.q_dq95fev, sub.q_dq95mar, sub.q_dq95abr, sub.q_dq95mai, sub.q_dq95jun,
      sub.q_dq95jul, sub.q_dq95ago, sub.q_dq95set, sub.q_dq95out, sub.q_dq95nov, sub.q_dq95dez, sub.q_q95espano,
      ST_Distance(sub.geom, ST_Transform (d.geometry, 3857)) As act_dist, sub.q_noriocomp, sub.dist_foz
-     FROM subtrechos AS sub, otto_minibacias_pol_100k AS mini, durhs_filtradas_completas AS d
+     FROM subtrechos_lages AS sub, otto_minibacias_pol_100k AS mini, durhs_filtradas_completas AS d
      WHERE d.numerodurh = '{numerodurh}' AND
          mini.cobacia = (SELECT mini.cobacia
                            FROM
@@ -68,12 +68,11 @@ async def get_subdados(data):
 """)
     cnarh_select = await conn.fetch(f"""
 SELECT *
-FROM cnarh40_otto AS cn
+FROM cnarh40go_20220722_otto AS cn
 WHERE cn.cobacia = '{cobacia}' AND (cn.int_tin_ds = 'Captação' 
 AND cn.int_tch_ds = 'Rio ou Curso D''Água') 
 """)
-    durh_select = await conn.fetch(f"""
-""")
+
     await conn.close()
     colnames_sub = [key for key in sub_select[0].keys()]
     colnames_cnarh = [key for key in cnarh_select[0].keys()]
@@ -82,17 +81,141 @@ AND cn.int_tch_ds = 'Rio ou Curso D''Água')
     gdf_select_sub = gpd.GeoDataFrame(df_select_sub)
     gdf_select_cnarh = gpd.GeoDataFrame(df_select_cnarh)
     gdf_select_sub.rename(columns={'geom': 'geometry'}, inplace=True)
+    gdf_select_cnarh.rename(columns={'geom': 'geometry'}, inplace=True)
     gdf_select_sub['geometry'] = gpd.geoseries.from_wkb(gdf_select_sub['geometry'])
     gdf_select_cnarh['geometry'] = gpd.geoseries.from_wkb(gdf_select_cnarh['geometry'])
     gdf_select_sub.set_crs(epsg='3857', inplace=True)
     gdf_select_cnarh.set_crs(epsg='3857', inplace=True)
     cnarh_sjoin = gpd.sjoin_nearest(gdf_select_cnarh, gdf_select_sub, how='inner')
+    # SELECIONAR DADO MAIOR QUE ATRIBUTO X  15285
+    cnarh_sjoin.fillna(np.nan, inplace=True)
+    cnarh_sjoin.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = \
+        cnarh_sjoin.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(
+            str).stack().str.replace('.', '', regex=True).unstack()
+    cnarh_sjoin.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = \
+        cnarh_sjoin.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(
+            str).stack().str.replace(',', '.', regex=True).unstack()
     sel_mont_cnarh = cnarh_sjoin.loc[(cnarh_sjoin['dist_foz'] >= dist)]
     sel_jus_cnarh = cnarh_sjoin.loc[(cnarh_sjoin['dist_foz'] < dist)]
-    # SELECIONAR DADO MAIOR QUE ATRIBUTO X  15285
-    return cnarh_sjoin, sel_mont_cnarh, sel_jus_cnarh
+    # Contagem de outorgar à jusante != nan
+    tot_cnarh_jan_jus = sel_jus_cnarh[sel_jus_cnarh['dad_qt_vazaodiajan'] != "nan"]
+    tot_cnarh_fev_jus = sel_jus_cnarh[sel_jus_cnarh['dad_qt_vazaodiafev'] != "nan"]
+    tot_cnarh_mar_jus = sel_jus_cnarh[sel_jus_cnarh['dad_qt_vazaodiamar'] != "nan"]
+    tot_cnarh_abr_jus = sel_jus_cnarh[sel_jus_cnarh['dad_qt_vazaodiaabr'] != "nan"]
+    tot_cnarh_mai_jus = sel_jus_cnarh[sel_jus_cnarh['dad_qt_vazaodiamai'] != "nan"]
+    tot_cnarh_jun_jus = sel_jus_cnarh[sel_jus_cnarh['dad_qt_vazaodiajun'] != "nan"]
+    tot_cnarh_jul_jus = sel_jus_cnarh[sel_jus_cnarh['dad_qt_vazaodiajul'] != "nan"]
+    tot_cnarh_ago_jus = sel_jus_cnarh[sel_jus_cnarh['dad_qt_vazaodiaago'] != "nan"]
+    tot_cnarh_set_jus = sel_jus_cnarh[sel_jus_cnarh['dad_qt_vazaodiaset'] != "nan"]
+    tot_cnarh_out_jus = sel_jus_cnarh[sel_jus_cnarh['dad_qt_vazaodiaout'] != "nan"]
+    tot_cnarh_nov_jus = sel_jus_cnarh[sel_jus_cnarh['dad_qt_vazaodianov'] != "nan"]
+    tot_cnarh_dez_jus = sel_jus_cnarh[sel_jus_cnarh['dad_qt_vazaodiadez'] != "nan"]
+    tot_out_jus = [tot_cnarh_jan_jus.id_left.count(), tot_cnarh_fev_jus.id_left.count(), tot_cnarh_mar_jus.id_left.count(),
+               tot_cnarh_abr_jus.id_left.count(), tot_cnarh_mai_jus.id_left.count(), tot_cnarh_jun_jus.id_left.count(),
+               tot_cnarh_jul_jus.id_left.count(), tot_cnarh_ago_jus.id_left.count(), tot_cnarh_set_jus.id_left.count(),
+               tot_cnarh_out_jus.id_left.count(), tot_cnarh_nov_jus.id_left.count(), tot_cnarh_dez_jus.id_left.count()]
 
+    # Contagem de outorgar à montante != nan
+    tot_cnarh_jan_mont = sel_mont_cnarh[sel_mont_cnarh['dad_qt_vazaodiajan'] != "nan"]
+    tot_cnarh_fev_mont = sel_mont_cnarh[sel_mont_cnarh['dad_qt_vazaodiafev'] != "nan"]
+    tot_cnarh_mar_mont = sel_mont_cnarh[sel_mont_cnarh['dad_qt_vazaodiamar'] != "nan"]
+    tot_cnarh_abr_mont = sel_mont_cnarh[sel_mont_cnarh['dad_qt_vazaodiaabr'] != "nan"]
+    tot_cnarh_mai_mont = sel_mont_cnarh[sel_mont_cnarh['dad_qt_vazaodiamai'] != "nan"]
+    tot_cnarh_jun_mont = sel_mont_cnarh[sel_mont_cnarh['dad_qt_vazaodiajun'] != "nan"]
+    tot_cnarh_jul_mont = sel_mont_cnarh[sel_mont_cnarh['dad_qt_vazaodiajul'] != "nan"]
+    tot_cnarh_ago_mont = sel_mont_cnarh[sel_mont_cnarh['dad_qt_vazaodiaago'] != "nan"]
+    tot_cnarh_set_mont = sel_mont_cnarh[sel_mont_cnarh['dad_qt_vazaodiaset'] != "nan"]
+    tot_cnarh_out_mont = sel_mont_cnarh[sel_mont_cnarh['dad_qt_vazaodiaout'] != "nan"]
+    tot_cnarh_nov_mont = sel_mont_cnarh[sel_mont_cnarh['dad_qt_vazaodianov'] != "nan"]
+    tot_cnarh_dez_mont = sel_mont_cnarh[sel_mont_cnarh['dad_qt_vazaodiadez'] != "nan"]
+    tot_out_mont = [tot_cnarh_jan_mont.id_left.count(), tot_cnarh_fev_mont.id_left.count(), tot_cnarh_mar_mont.id_left.count(),
+               tot_cnarh_abr_mont.id_left.count(), tot_cnarh_mai_mont.id_left.count(), tot_cnarh_jun_mont.id_left.count(),
+               tot_cnarh_jul_mont.id_left.count(), tot_cnarh_ago_mont.id_left.count(), tot_cnarh_set_mont.id_left.count(),
+               tot_cnarh_out_mont.id_left.count(), tot_cnarh_nov_mont.id_left.count(), tot_cnarh_dez_mont.id_left.count()]
 
+    # Transformando o dado em float para calcular vazões
+    sel_jus_cnarh.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = \
+        sel_jus_cnarh.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(
+            float)
+    sel_mont_cnarh.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = \
+        sel_mont_cnarh.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(
+            float)
+    # Soma da DAD_QT_VAZAODIAMES e converter p L/s (*1000)/3600
+    vaz_tot_cnarh_jus = [round(np.nansum(sel_jus_cnarh['dad_qt_vazaodiajan'] / 3.6), 2),
+                     round(np.nansum(sel_jus_cnarh['dad_qt_vazaodiafev'] / 3.6), 2),
+                     round(np.nansum(sel_jus_cnarh['dad_qt_vazaodiamar'] / 3.6), 2),
+                     round(np.nansum(sel_jus_cnarh['dad_qt_vazaodiaabr'] / 3.6), 2),
+                     round(np.nansum(sel_jus_cnarh['dad_qt_vazaodiamai'] / 3.6), 2),
+                     round(np.nansum(sel_jus_cnarh['dad_qt_vazaodiajun'] / 3.6), 2),
+                     round(np.nansum(sel_jus_cnarh['dad_qt_vazaodiajul'] / 3.6), 2),
+                     round(np.nansum(sel_jus_cnarh['dad_qt_vazaodiaago'] / 3.6), 2),
+                     round(np.nansum(sel_jus_cnarh['dad_qt_vazaodiaset'] / 3.6), 2),
+                     round(np.nansum(sel_jus_cnarh['dad_qt_vazaodiaout'] / 3.6), 2),
+                     round(np.nansum(sel_jus_cnarh['dad_qt_vazaodianov'] / 3.6), 2),
+                     round(np.nansum(sel_jus_cnarh['dad_qt_vazaodiadez'] / 3.6), 2)]
+    vaz_tot_cnarh_mont = [round(np.nansum(sel_mont_cnarh['dad_qt_vazaodiajan'] / 3.6), 2),
+                     round(np.nansum(sel_mont_cnarh['dad_qt_vazaodiafev'] / 3.6), 2),
+                     round(np.nansum(sel_mont_cnarh['dad_qt_vazaodiamar'] / 3.6), 2),
+                     round(np.nansum(sel_mont_cnarh['dad_qt_vazaodiaabr'] / 3.6), 2),
+                     round(np.nansum(sel_mont_cnarh['dad_qt_vazaodiamai'] / 3.6), 2),
+                     round(np.nansum(sel_mont_cnarh['dad_qt_vazaodiajun'] / 3.6), 2),
+                     round(np.nansum(sel_mont_cnarh['dad_qt_vazaodiajul'] / 3.6), 2),
+                     round(np.nansum(sel_mont_cnarh['dad_qt_vazaodiaago'] / 3.6), 2),
+                     round(np.nansum(sel_mont_cnarh['dad_qt_vazaodiaset'] / 3.6), 2),
+                     round(np.nansum(sel_mont_cnarh['dad_qt_vazaodiaout'] / 3.6), 2),
+                     round(np.nansum(sel_mont_cnarh['dad_qt_vazaodianov'] / 3.6), 2),
+                     round(np.nansum(sel_mont_cnarh['dad_qt_vazaodiadez'] / 3.6), 2)]
+
+    return tot_out_jus, tot_out_mont, vaz_tot_cnarh_jus, vaz_tot_cnarh_mont
+
+# DURHS SUBTRECHO
+
+async def get_valid_durhs(data):
+    cobacia = data.loc[0]['cobacia']
+    cocursodag = data.loc[0]['cocursodag']
+    conn = await asyncpg.connect('postgresql://adm_geout:ssdgeout@10.207.30.15:5432/geout')
+    durhs_select = await conn.fetch(f"""
+SELECT *
+FROM durhs_filtradas_otto AS d  
+WHERE((d.cocursodag) LIKE ('{cocursodag}%') 
+                         AND (d.cobacia) >= ('{cobacia}'))
+AND (d.situacaodurh = 'Validada' 
+AND d.pontointerferencia = 'Captação Superficial')
+    """)
+    colnames = [key for key in durhs_select[0].keys()]
+    df_durhs_select = pd.DataFrame(durhs_select, columns=colnames)
+    gdf_durhs_select = gpd.GeoDataFrame(df_durhs_select)
+    gdf_durhs_select['geometry'] = gpd.GeoSeries.from_wkb(gdf_durhs_select['geometry'])
+    gdf_durhs_select.set_crs(epsg='3857', inplace=True)
+    gdf_durhs_select.fillna(np.nan, inplace=True)
+    gdf_durhs_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = \
+        gdf_durhs_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(str)
+    tot_durh_jan = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiajan'] != "nan"]
+    tot_durh_fev = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiafev'] != "nan"]
+    tot_durh_mar = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiamar'] != "nan"]
+    tot_durh_abr = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiaabr'] != "nan"]
+    tot_durh_mai = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiamai'] != "nan"]
+    tot_durh_jun = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiajun'] != "nan"]
+    tot_durh_jul = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiajul'] != "nan"]
+    tot_durh_ago = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiaago'] != "nan"]
+    tot_durh_set = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiaset'] != "nan"]
+    tot_durh_out = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiaout'] != "nan"]
+    tot_durh_nov = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodianov'] != "nan"]
+    tot_durh_dez = gdf_durhs_select[gdf_durhs_select['dad_qt_vazaodiadez'] != "nan"]
+    gdf_durhs_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'] = \
+        gdf_durhs_select.loc[:, 'dad_qt_vazaodiajan':'dad_qt_vazaodiadez'].astype(float)
+    # Produtos finais adquiridos no return
+    total_durhs_mont = [tot_durh_jan.gml_id.count(), tot_durh_fev.gml_id.count(), tot_durh_mar.gml_id.count(),
+                        tot_durh_abr.gml_id.count(), tot_durh_mai.gml_id.count(), tot_durh_jun.gml_id.count(),
+                        tot_durh_jul.gml_id.count(), tot_durh_ago.gml_id.count(), tot_durh_set.gml_id.count(),
+                        tot_durh_out.gml_id.count(), tot_durh_nov.gml_id.count(), tot_durh_dez.gml_id.count()]
+    vaz_durhs_mont = [np.nansum(gdf_durhs_select.dad_qt_vazaodiajan), np.nansum(gdf_durhs_select.dad_qt_vazaodiafev),
+                      np.nansum(gdf_durhs_select.dad_qt_vazaodiamar), np.nansum(gdf_durhs_select.dad_qt_vazaodiaabr),
+                      np.nansum(gdf_durhs_select.dad_qt_vazaodiamai), np.nansum(gdf_durhs_select.dad_qt_vazaodiajun),
+                      np.nansum(gdf_durhs_select.dad_qt_vazaodiajul), np.nansum(gdf_durhs_select.dad_qt_vazaodiaago),
+                      np.nansum(gdf_durhs_select.dad_qt_vazaodiaset), np.nansum(gdf_durhs_select.dad_qt_vazaodiaout),
+                      np.nansum(gdf_durhs_select.dad_qt_vazaodianov), np.nansum(gdf_durhs_select.dad_qt_vazaodiadez)]
+    return total_durhs_mont, vaz_durhs_mont
 
 # SELECIONAR MINI BACIAS
 async def get_minibacia(data):
