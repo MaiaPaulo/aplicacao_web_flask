@@ -56,21 +56,62 @@ FROM
                  'q_noriocomp': data.iloc[0]['q_noriocomp']}
     return data, dic_infos
 
+# MFJ
+async def get_jus(data):
+    cobacia = data.loc[0]['cobacia']
+    cocursodag = data.loc[0]['cocursodag']
+    cocursodag_int = int(cocursodag)
+    lista_cocursodag = []
+    i = 0
+    while i < len(cocursodag):
+        if (cocursodag_int % 2) == 0:
+            lista_cocursodag.append(str(cocursodag_int))
+            cocursodag_int = int(cocursodag_int / 10)
+            i = i + 1
+        else:
+            cocursodag_int = int(cocursodag_int / 10)
+            i = i + 1
+    lista_cocursodag = str(lista_cocursodag)
+    lista_cocursodag = lista_cocursodag[2:-2]
+    conn = await asyncpg.connect('postgresql://adm_geout:ssdgeout@10.207.30.15:5432/geout')
+    cnarh_select = await conn.fetch(f"""
+        SELECT cn.cobacia, cn.cocursodag, cn.geom, cn.int_cd_cnarh40, cn.dad_qt_vazaodiajan, 
+        cn.dad_qt_vazaodiafev, cn.dad_qt_vazaodiamar, cn.dad_qt_vazaodiaabr, cn.dad_qt_vazaodiamai, 
+        cn.dad_qt_vazaodiajun, cn.dad_qt_vazaodiajul, cn.dad_qt_vazaodiaago, cn.dad_qt_vazaodiaset, 
+        cn.dad_qt_vazaodiaout, cn.dad_qt_vazaodianov, cn.dad_qt_vazaodiadez
+
+        FROM cnarh40go_20220722_otto as cn
+
+        WHERE cn.cobacia < '6869443631' 
+        AND cn.cocursodag IN ('68694436', '686944','68694','686','68','6')
+        AND(cn.int_tin_ds = 'Captação' and cn.int_tch_ds = 'Rio ou Curso D''Água')	
+        """)
+    sub_select = await conn.fetch(f"""
+        SELECT sub.feco, sub.q_dq95jan,  sub.q_dq95fev, sub.q_dq95mar, sub.q_dq95abr, sub.q_dq95mai, sub.q_dq95jun,
+        sub.q_dq95jul, sub.q_dq95ago, sub.q_dq95set, sub.q_dq95out, sub.q_dq95nov, sub.q_dq95dez, sub.geom
+        FROM subtrechos_lages as sub 
+        WHERE sub.cobacia < '6869443631'
+        AND sub.cocursodag IN ('68694436', '686944','68694','686','68','6')
+""")
+    await conn.close()
+    return cnarh_select, sub_select
+
+
 # SELECIONAR DADOS SUBTRECHOS
 async def get_subdados(data):
     cobacia = data.loc[0]['cobacia']
     dist = data.loc[0]['dist_foz']
     conn = await asyncpg.connect('postgresql://adm_geout:ssdgeout@10.207.30.15:5432/geout')
     sub_select = await conn.fetch(f"""
-    SELECT *
-    FROM subtrechos_lages as sub 
-    where sub.cobacia = '{cobacia}'
+        SELECT *
+        FROM subtrechos_lages AS sub 
+        WHERE sub.cobacia = '{cobacia}'
 """)
     cnarh_select = await conn.fetch(f"""
-SELECT *
-FROM cnarh40go_20220722_otto AS cn
-WHERE cn.cobacia = '{cobacia}' AND (cn.int_tin_ds = 'Captação' 
-AND cn.int_tch_ds = 'Rio ou Curso D''Água') 
+        SELECT *
+        FROM cnarh40go_20220722_otto AS cn
+        WHERE cn.cobacia = '{cobacia}' AND (cn.int_tin_ds = 'Captação' 
+        AND cn.int_tch_ds = 'Rio ou Curso D''Água') 
 """)
 
     await conn.close()

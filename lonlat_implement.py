@@ -294,6 +294,7 @@ def anals_without_durh(data):
     dfinfos["Qnt de outorgas à mont "] = tot_out
     dfinfos["Vazao Total cnarh Montante L/s"] = vaz_tot_cnarh
     dfinfos['Vazão Total à Montante'] = vaz_tot_cnarh
+    dfinfos = dfinfos.fillna(0)
     dfinfos["Comprom individual(%)"] = (dfinfos['Vazão/Dia'] / qoutorgavel) * 100
     dfinfos["Comprom bacia(%)"] = ((dfinfos['Vazão/Dia'] + dfinfos['Vazão Total à Montante']) / qoutorgavel) * 100
     dfinfos["Q outorgável"] = qoutorgavel
@@ -319,6 +320,7 @@ def anals_complete(data):
     dfinfos["Qnt de outorgas à mont "] = tot_out
     dfinfos["Vazao Total cnarh Montante L/s"] = vaz_tot_cnarh
     dfinfos['Vazão Total à Montante'] = [(x + y) for x, y in zip(vaz_tot_cnarh, vaz_durhs_mont)]
+    dfinfos = dfinfos.fillna(0)
     dfinfos["Comprom individual(%)"] = (dfinfos['Vazão/Dia'] / qoutorgavel) * 100
     dfinfos["Comprom bacia(%)"] = ((dfinfos['Vazão/Dia'] + dfinfos['Vazão Total à Montante']) /
                                    qoutorgavel) * 100
@@ -341,6 +343,7 @@ def anals_without_cnarh(data):
     dfinfos['Q95 Esp l/s/km²'] = dq95_espmes
     dfinfos['Durhs val à mont'] = total_durhs_mont
     dfinfos['Vazão Total à Montante'] = vaz_durhs_mont
+    dfinfos = dfinfos.fillna(0)
     dfinfos["Comprom individual(%)"] = round((dfinfos['Vazão/Dia'] / qoutorgavel) * 100, 2)
     dfinfos["Comprom bacia(%)"] = round(
         ((dfinfos['Vazão/Dia'] + dfinfos['Vazão Total à Montante']) / qoutorgavel) * 100, 2)
@@ -360,6 +363,7 @@ def anals_no_mont(data):
     analise = "Sem Durhs e Outorgas à Montante"
     dfinfos['Q95 local l/s'] = q95_local
     dfinfos['Q95 Esp l/s/km²'] = dq95_espmes
+    dfinfos = dfinfos.fillna(0)
     dfinfos["Comprom individual(%)"] = (dfinfos['Vazão/Dia'] / qoutorgavel) * 100
     dfinfos["Comprom bacia(%)"] = ((dfinfos['Vazão/Dia']) / qoutorgavel) * 100
     dfinfos["Q disponível"] = qoutorgavel
@@ -634,6 +638,7 @@ def anals_complete_c(data_sub, data_durh):
     dfinfos["Qnt de outorgas à mont "] = tot_out
     dfinfos["Vazao Total cnarh Montante L/s"] = vaz_tot_cnarh
     dfinfos['Vazão Total à Montante'] = [(x + y) for x, y in zip(vaz_tot_cnarh, vaz_durhs_mont)]
+    dfinfos = dfinfos.fillna(0)
     dfinfos["Comprom individual(%)"] = (dfinfos['Vazão/Dia'] / qoutorgavel) * 100
     dfinfos["Comprom bacia(%)"] = ((dfinfos['Vazão/Dia'] + dfinfos['Vazão Total à Montante']) /
                                    qoutorgavel) * 100
@@ -657,6 +662,7 @@ def anals_without_durh_c(data_sub, data_durh):
     dfinfos["Qnt de outorgas à mont "] = tot_out
     dfinfos["Vazao Total cnarh Montante L/s"] = vaz_tot_cnarh
     dfinfos['Vazão Total à Montante'] = vaz_tot_cnarh
+    dfinfos = dfinfos.fillna(0)
     dfinfos["Comprom individual(%)"] = (dfinfos['Vazão/Dia'] / qoutorgavel) * 100
     dfinfos["Comprom bacia(%)"] = ((dfinfos['Vazão/Dia'] + dfinfos['Vazão Total à Montante']) / qoutorgavel) * 100
     dfinfos["Q outorgável"] = qoutorgavel
@@ -678,6 +684,7 @@ def anals_without_cnarh_c(data_sub, data_durh):
     dfinfos['Q95 Esp l/s/km²'] = dq95_espmes
     dfinfos['Durhs val à mont'] = total_durhs_mont
     dfinfos['Vazão Total à Montante'] = vaz_durhs_mont
+    dfinfos = dfinfos.fillna(0)
     dfinfos["Comprom individual(%)"] = round((dfinfos['Vazão/Dia'] / qoutorgavel) * 100, 2)
     dfinfos["Comprom bacia(%)"] = round(
         ((dfinfos['Vazão/Dia'] + dfinfos['Vazão Total à Montante']) / qoutorgavel) * 100, 2)
@@ -697,6 +704,7 @@ def anals_no_mont_c(data_sub, data_durh):
     analise = "Sem Durhs e Outorgas à Montante"
     dfinfos['Q95 local l/s'] = q95_local
     dfinfos['Q95 Esp l/s/km²'] = dq95_espmes
+    dfinfos = dfinfos.fillna(0)
     dfinfos["Comprom individual(%)"] = (dfinfos['Vazão/Dia'] / qoutorgavel) * 100
     dfinfos["Comprom bacia(%)"] = ((dfinfos['Vazão/Dia']) / qoutorgavel) * 100
     dfinfos["Q disponível"] = qoutorgavel
