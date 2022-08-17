@@ -28,7 +28,7 @@ FROM
      sub.q_q95espago, sub.q_q95espset, sub.q_q95espout, sub.q_q95espnov, sub.q_q95espdez,
      sub.q_dq95jan, sub.q_dq95fev, sub.q_dq95mar, sub.q_dq95abr, sub.q_dq95mai, sub.q_dq95jun,
      sub.q_dq95jul, sub.q_dq95ago, sub.q_dq95set, sub.q_dq95out, sub.q_dq95nov, sub.q_dq95dez, sub.q_q95espano,
-     ST_Distance(sub.geom, ST_Transform (d.geometry, 3857)) As act_dist, sub.q_noriocomp
+     ST_Distance(sub.geom, ST_Transform (d.geometry, 3857)) As act_dist, sub.q_noriocomp, sub.dedominial
      FROM subtrechos AS sub, otto_minibacias_pol_100k AS mini, durhs_filtradas_completas AS d
      WHERE d.numerodurh = '{numerodurh}' AND
          mini.cobacia = (SELECT mini.cobacia
